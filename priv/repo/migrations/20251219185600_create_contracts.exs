@@ -24,7 +24,6 @@ defmodule Overbooked.Repo.Migrations.CreateContracts do
     create index(:contracts, [:resource_id])
     create index(:contracts, [:user_id])
     create index(:contracts, [:status])
-    create index(:contracts, [:stripe_checkout_session_id])
     create unique_index(:contracts, [:stripe_checkout_session_id], where: "stripe_checkout_session_id IS NOT NULL")
   end
 end

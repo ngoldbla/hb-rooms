@@ -41,6 +41,28 @@ Overbooked is a self-hosted flexible workplace platform for indie co-working own
 
 5. Deploy! Railway will automatically run migrations via the pre-deploy command.
 
+### Troubleshooting
+
+#### Failed Migration Cleanup
+
+If a migration fails partway through (e.g., duplicate index error), the database may be in an inconsistent state. To fix this:
+
+1. Open the Railway dashboard and connect to your PostgreSQL database via the **Query** tab or use the Railway CLI:
+   ```bash
+   railway connect postgres
+   ```
+
+2. Run the following SQL to clean up the failed migration (replace with the actual migration version):
+   ```sql
+   -- Drop the partially created table
+   DROP TABLE IF EXISTS contracts;
+   
+   -- Remove the migration from the tracking table
+   DELETE FROM schema_migrations WHERE version = 20251219185600;
+   ```
+
+3. Redeploy your app - the migration will run fresh.
+
 ### Configs
 
 1. Domain
