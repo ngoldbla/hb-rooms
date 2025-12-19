@@ -24,7 +24,7 @@ defmodule OverbookedWeb.ContractsLive do
           <p class="text-gray-600">
             View and manage your office space contracts.
           </p>
-          <.link navigate={~p"/spaces"}>
+          <.link navigate={Routes.live_path(@socket, OverbookedWeb.SpacesLive)}>
             <.button variant={:primary}>
               Browse Spaces
             </.button>
@@ -39,7 +39,7 @@ defmodule OverbookedWeb.ContractsLive do
               Get started by browsing available office spaces.
             </p>
             <div class="mt-4">
-              <.link navigate={~p"/spaces"}>
+              <.link navigate={Routes.live_path(@socket, OverbookedWeb.SpacesLive)}>
                 <.button variant={:primary}>Browse Spaces</.button>
               </.link>
             </div>

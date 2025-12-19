@@ -160,8 +160,8 @@ defmodule OverbookedWeb.SpacesLive do
     user = socket.assigns.current_user
     duration = socket.assigns.duration
 
-    success_url = url(socket, ~p"/contracts/success?session_id={CHECKOUT_SESSION_ID}")
-    cancel_url = url(socket, ~p"/spaces")
+    success_url = Routes.live_url(socket, OverbookedWeb.ContractSuccessLive) <> "?session_id={CHECKOUT_SESSION_ID}"
+    cancel_url = Routes.live_url(socket, OverbookedWeb.SpacesLive)
 
     socket = assign(socket, checkout_loading: true)
 
