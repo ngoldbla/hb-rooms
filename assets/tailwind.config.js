@@ -4,13 +4,45 @@ module.exports = {
   content: ["../lib/*_web/**/*.*ex", "./js/**/*.js"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Nunito Sans"', 'sans-serif'],
+      },
       colors: {
-        primary: colors.slate,
-        secondary: colors.purple,
+        primary: {
+          50: '#FFF9E9',   // --color--ly1
+          100: '#FFF3D3',  // --color--ly2
+          200: '#FFEDBC',  // --color--ly3
+          300: '#FFDE9E',
+          400: '#FFD06B',
+          500: '#FFC421',  // --color--brand-yellow (primary)
+          600: '#FFA100',  // --color--y4
+          700: '#FF8D03',  // --color--y5
+          800: '#E67A00',
+          900: '#CC6C00',
+        },
+        secondary: {
+          50: '#E9EEFF',   // --color--lb1
+          100: '#D3DDFF',  // --color--lb2
+          200: '#BCCCFF',  // --color--lb3
+          300: '#8BA8FF',
+          400: '#5A84FF',
+          500: '#2153FF',  // --color--accent-blue
+          600: '#216FFF',  // --color--b1
+          700: '#2185FF',  // --color--b2
+          800: '#2197FF',  // --color--b3
+          900: '#1A3ACC',
+        },
+        'dark-blue': {
+          DEFAULT: '#000824',  // --color--dark-blue
+          light: '#0D142F',    // --color--db1
+          medium: '#1A213A',   // --color--db2
+          muted: '#262D45',    // --color--db3
+        },
         danger: colors.red,
       },
     },
   },
+
   safelist: [
     "col-start-1",
     "col-start-2",

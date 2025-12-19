@@ -7,7 +7,13 @@ defmodule Overbooked.Resources.Resource do
     field :color, :string, default: "gray"
     field :booking_count, :integer, virtual: true
 
+    # Rentable space pricing fields
+    field :is_rentable, :boolean, default: false
+    field :monthly_rate_cents, :integer
+    field :description, :string
+
     has_many :bookings, Overbooked.Schedule.Booking
+    has_many :contracts, Overbooked.Contracts.Contract
 
     many_to_many :amenities, Overbooked.Resources.Amenity,
       join_through: Overbooked.Resources.ResourceAmenity,
@@ -20,8 +26,23 @@ defmodule Overbooked.Resources.Resource do
   @doc false
   def changeset(resource, attrs) do
     resource
-    |> cast(attrs, [:name, :color])
+    |> cast(attrs, [:name, :color, :is_rentable, :monthly_rate_cents, :description])
     |> validate_required([:name, :color])
+    |> validate_rentable_pricing()
+  end
+
+  @doc """
+  Validates that rentable resources have a monthly rate set.
+  """
+  defp validate_rentable_pricing(changeset) do
+    is_rentable = get_field(changeset, :is_rentable)
+    monthly_rate = get_field(changeset, :monthly_rate_cents)
+
+    if is_rentable && (is_nil(monthly_rate) || monthly_rate <= 0) do
+      add_error(changeset, :monthly_rate_cents, "is required for rentable spaces")
+    else
+      changeset
+    end
   end
 
   def put_resource_type(
@@ -38,3 +59,4 @@ defmodule Overbooked.Resources.Resource do
     put_assoc(changeset, :amenities, amenities)
   end
 end
+
