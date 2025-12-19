@@ -6,6 +6,7 @@
   },
   "deploy": {
     "startCommand": "/app/bin/server",
+    "preDeployCommand": "/app/bin/migrate",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

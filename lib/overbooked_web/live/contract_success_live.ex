@@ -19,7 +19,7 @@ defmodule OverbookedWeb.ContractSuccessLive do
   end
 
   def mount(_params, _session, socket) do
-    {:ok, redirect(socket, to: Routes.live_path(socket, OverbookedWeb.ContractsLive))}
+    {:ok, redirect(socket, to: "/contracts")}
   end
 
   @impl true
@@ -90,10 +90,10 @@ defmodule OverbookedWeb.ContractSuccessLive do
           <% end %>
 
           <div class="mt-8 space-x-4">
-            <.link navigate={Routes.live_path(@socket, OverbookedWeb.ContractsLive)}>
+            <.link navigate={"/contracts"}>
               <.button variant={:primary}>View My Contracts</.button>
             </.link>
-            <.link navigate={Routes.live_path(@socket, OverbookedWeb.HomeLive)}>
+            <.link navigate={"/"}>
               <.button variant={:secondary}>Go to Home</.button>
             </.link>
           </div>

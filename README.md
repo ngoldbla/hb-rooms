@@ -18,6 +18,28 @@ Overbooked is a self-hosted flexible workplace platform for indie co-working own
 
 1. Clone repo, change configs, deploy to Fly.io
 2. Run docker image
+3. Deploy to Railway (see below)
+
+### Railway Deployment
+
+1. Create a new project on [Railway](https://railway.app)
+2. Add a PostgreSQL database service
+3. Connect your GitHub repository
+4. Set the following environment variables:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | ✅ | PostgreSQL connection string (auto-set by Railway if using their Postgres) |
+| `SECRET_KEY_BASE` | ✅ | Generate with `mix phx.gen.secret` |
+| `PHX_HOST` | ✅ | Your app domain (e.g., `your-app.railway.app`) |
+| `PHX_SERVER` | ✅ | Set to `true` |
+| `STRIPE_SECRET_KEY` | ✅ | Stripe API secret key from [dashboard.stripe.com](https://dashboard.stripe.com/apikeys) |
+| `STRIPE_WEBHOOK_SECRET` | ⚪ | Stripe webhook signing secret (for payment webhooks) |
+| `SENDINBLUE_API_KEY` | ⚪ | Sendinblue API key for emails |
+| `PORT` | ⚪ | Defaults to `4000` |
+| `POOL_SIZE` | ⚪ | Database pool size, defaults to `10` |
+
+5. Deploy! Railway will automatically run migrations via the pre-deploy command.
 
 ### Configs
 
