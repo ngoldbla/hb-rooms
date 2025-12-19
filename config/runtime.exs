@@ -56,8 +56,8 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   config :overbooked, Overbooked.Mailer,
-    adapter: Swoosh.Adapters.Sendinblue,
-    api_key: System.get_env("SENDINBLUE_API_KEY")
+    adapter: Swoosh.Adapters.Resend,
+    api_key: System.get_env("RESEND_API_KEY")
 
   config :swoosh, :api_client, Swoosh.ApiClient.Hackney
 
