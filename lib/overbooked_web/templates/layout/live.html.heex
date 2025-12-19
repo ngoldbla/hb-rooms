@@ -64,7 +64,7 @@
                 /> Desks
               </.link>
               <.link
-                navigate={~p"/spaces"}
+                navigate={Routes.spaces_path(@socket, :index)}
                 class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :spaces, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
               >
                 <.icon
@@ -74,7 +74,7 @@
                 /> Spaces
               </.link>
               <.link
-                navigate={~p"/contracts"}
+                navigate={Routes.contracts_path(@socket, :index)}
                 class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :contracts, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
               >
                 <.icon
