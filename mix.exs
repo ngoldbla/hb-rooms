@@ -52,7 +52,8 @@ defmodule Overbooked.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:heroicons, "~> 0.2.2"},
       {:timex, "~> 3.7"},
-      {:tailwind, "~> 0.1", runtime: Mix.env() == :dev}
+      {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
+      {:stripity_stripe, "~> 3.1"}
     ]
   end
 

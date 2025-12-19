@@ -58,6 +58,15 @@ config :tailwind,
     cd: Path.expand("../assets", __DIR__)
   ]
 
+# Stripe configuration
+# API keys should be set in runtime.exs or via environment variables
+config :stripity_stripe,
+  api_version: "2023-10-16"
+
+config :overbooked,
+  stripe_webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET")
+
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

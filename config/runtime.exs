@@ -61,6 +61,21 @@ if config_env() == :prod do
 
   config :swoosh, :api_client, Swoosh.ApiClient.Hackney
 
+  # Stripe configuration
+  stripe_secret_key =
+    System.get_env("STRIPE_SECRET_KEY") ||
+      raise """
+      environment variable STRIPE_SECRET_KEY is missing.
+      Get your Stripe API keys from https://dashboard.stripe.com/apikeys
+      """
+
+  config :stripity_stripe,
+    api_key: stripe_secret_key
+
+  config :overbooked,
+    stripe_webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET")
+
+
   # ## Using releases
   #
   # If you are doing OTP releases, you need to instruct Phoenix

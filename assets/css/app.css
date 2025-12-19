@@ -4,6 +4,9 @@
 @import "tailwindcss/utilities";
 
 @layer base {
+  html {
+    font-family: 'Nunito Sans', sans-serif;
+  }
   h1 {
     @apply text-lg font-medium leading-6 text-gray-900 sm:truncate focus:outline-none;
   }
@@ -13,14 +16,23 @@
 }
 
 @layer components {
-  /* Add component styles here (eg. buttons or tabs or anything that uses a number of styles)
-
-    Example component:
-    .btn-blue {
-      @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
-    }
-  */
+  /* Hatchbridge-style pill buttons */
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-black font-medium 
+           py-2.5 px-5 rounded-full transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-black hover:bg-gray-800 text-white font-medium 
+           py-2.5 px-5 rounded-full border border-black transition-colors;
+  }
+  
+  .btn-outline {
+    @apply bg-transparent hover:bg-gray-100 text-black font-medium 
+           py-2.5 px-5 rounded-full border border-gray-300 transition-colors;
+  }
 }
+
 
 @layer utilities {
   .select-wrapper select {

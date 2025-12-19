@@ -48,6 +48,33 @@ defmodule Overbooked.Resources do
   end
 
   @doc """
+  Returns a list of rentable spaces with pricing.
+  """
+  def list_rentable_spaces(opts \\ []) do
+    from(r in Resource,
+      limit: ^Keyword.get(opts, :limit, 100),
+      where: r.is_rentable == true,
+      where: not is_nil(r.monthly_rate_cents),
+      preload: [:amenities, :resource_type]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single rentable resource by ID.
+  Returns nil if not found or not rentable.
+  """
+  def get_rentable_space(id) do
+    from(r in Resource,
+      where: r.id == ^id,
+      where: r.is_rentable == true,
+      preload: [:amenities, :resource_type]
+    )
+    |> Repo.one()
+  end
+
+
+  @doc """
   Gets a single resource.
 
   Raises `Ecto.NoResultsError` if the Resource does not exist.

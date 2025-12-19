@@ -17,6 +17,19 @@ defmodule OverbookedWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Pipeline for Stripe webhooks - needs raw body for signature verification
+  pipeline :stripe_webhook do
+    plug :accepts, ["json"]
+    plug OverbookedWeb.Plugs.FetchRawBody
+  end
+
+  # Stripe webhook endpoint
+  scope "/webhooks", OverbookedWeb do
+    pipe_through :stripe_webhook
+
+    post "/stripe", StripeWebhookController, :webhook
+  end
+
   scope "/", OverbookedWeb do
     pipe_through :browser
   end
@@ -100,6 +113,11 @@ defmodule OverbookedWeb.Router do
       live "/settings", UserSettingsLive, :index
       live "/rooms", RoomsLive, :index
       live "/desks", DesksLive, :index
+
+      # Office space rentals
+      live "/spaces", SpacesLive, :index
+      live "/contracts", ContractsLive, :index
+      live "/contracts/success", ContractSuccessLive, :index
     end
 
     live_session :admin,
