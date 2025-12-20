@@ -36,12 +36,13 @@ if config_env() == :prod do
       """
 
   host = Overbooked.RuntimeConfig.fetch_phx_host()
-  allowed_origins = Overbooked.RuntimeConfig.fetch_allowed_origins(host)
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :overbooked, OverbookedWeb.Endpoint,
-    url: [host: host, port: 443],
-    check_origin: allowed_origins,
+    url: [host: host, port: 443, scheme: "https"],
+    # Temporarily disabled to debug Railway WebSocket issues
+    # TODO: Re-enable with proper origin list once WebSocket works
+    check_origin: false,
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
