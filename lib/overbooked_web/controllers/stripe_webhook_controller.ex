@@ -11,13 +11,14 @@ defmodule OverbookedWeb.StripeWebhookController do
   @doc """
   Webhook endpoint for Stripe events.
   Verifies the webhook signature and processes supported events.
+  Webhook secret is read from Settings (DB) with fallback to env vars.
   """
   def webhook(conn, _params) do
     payload = conn.assigns[:raw_body]
     signature = get_stripe_signature(conn)
-    webhook_secret = get_webhook_secret()
 
-    case Overbooked.Stripe.construct_webhook_event(payload, signature, webhook_secret) do
+    # Use the 2-arity version which gets secret from Settings
+    case Overbooked.Stripe.construct_webhook_event(payload, signature) do
       {:ok, %Stripe.Event{type: type} = event} ->
         handle_event(type, event)
         send_resp(conn, 200, "OK")
@@ -86,9 +87,5 @@ defmodule OverbookedWeb.StripeWebhookController do
       [signature | _] -> signature
       [] -> ""
     end
-  end
-
-  defp get_webhook_secret do
-    Application.get_env(:overbooked, :stripe_webhook_secret, "")
   end
 end

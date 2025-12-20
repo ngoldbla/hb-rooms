@@ -6,6 +6,7 @@ defmodule Overbooked.Settings do
   import Ecto.Query, warn: false
   alias Overbooked.Repo
   alias Overbooked.Settings.MailSetting
+  alias Overbooked.Settings.StripeSetting
 
   @doc """
   Gets the mail setting singleton, creating a default one if it doesn't exist.
@@ -122,6 +123,142 @@ defmodule Overbooked.Settings do
       Overbooked.Mailer.deliver(email)
     else
       {:error, :mail_not_enabled}
+    end
+  end
+
+  # =============================================================================
+  # Stripe Settings
+  # =============================================================================
+
+  @doc """
+  Gets the stripe setting singleton, creating a default one if it doesn't exist.
+  """
+  def get_stripe_setting do
+    case Repo.one(from s in StripeSetting, limit: 1) do
+      nil ->
+        %StripeSetting{}
+        |> StripeSetting.changeset(%{})
+        |> Repo.insert!()
+
+      stripe_setting ->
+        stripe_setting
+    end
+  end
+
+  @doc """
+  Gets the stripe setting for display (with secret keys masked).
+  """
+  def get_stripe_setting_for_display do
+    stripe_setting = get_stripe_setting()
+
+    stripe_setting
+    |> mask_stripe_key(:secret_key)
+    |> mask_stripe_key(:webhook_secret)
+  end
+
+  defp mask_stripe_key(setting, field) do
+    case Map.get(setting, field) do
+      nil -> setting
+      "" -> setting
+      key when byte_size(key) > 8 ->
+        decoded = StripeSetting.decode_key(key)
+        masked = String.slice(decoded, 0, 8) <> "****" <> String.slice(decoded, -4, 4)
+        Map.put(setting, field, masked)
+      _ -> setting
+    end
+  end
+
+  @doc """
+  Updates the stripe setting.
+  """
+  def update_stripe_setting(attrs) do
+    stripe_setting = get_stripe_setting()
+
+    # Encode secret keys if they're being updated and not masked
+    attrs =
+      attrs
+      |> encode_stripe_key_if_needed(:secret_key, "secret_key", stripe_setting)
+      |> encode_stripe_key_if_needed(:webhook_secret, "webhook_secret", stripe_setting)
+
+    stripe_setting
+    |> StripeSetting.changeset(attrs)
+    |> Repo.update()
+  end
+
+  defp encode_stripe_key_if_needed(attrs, atom_key, string_key, existing_setting) do
+    key_value = attrs[string_key] || attrs[atom_key]
+
+    cond do
+      # No key in attrs, keep existing
+      is_nil(key_value) or key_value == "" ->
+        attrs
+        |> Map.delete(string_key)
+        |> Map.delete(atom_key)
+
+      # Key contains masked value (****), keep existing
+      String.contains?(key_value, "****") ->
+        Map.put(attrs, string_key, Map.get(existing_setting, atom_key))
+
+      # New key, encode it
+      true ->
+        encoded = StripeSetting.encode_key(key_value)
+        Map.put(attrs, string_key, encoded)
+    end
+  end
+
+  @doc """
+  Returns a changeset for tracking stripe setting changes.
+  """
+  def change_stripe_setting(%StripeSetting{} = stripe_setting, attrs \\ %{}) do
+    StripeSetting.changeset(stripe_setting, attrs)
+  end
+
+  @doc """
+  Returns the decoded Stripe configuration for use by the Stripe module.
+  Falls back to environment variables if DB config is not enabled.
+  """
+  def get_stripe_config do
+    stripe_setting = get_stripe_setting()
+
+    if stripe_setting.enabled and stripe_setting.secret_key do
+      %{
+        secret_key: StripeSetting.decode_key(stripe_setting.secret_key),
+        webhook_secret: StripeSetting.decode_key(stripe_setting.webhook_secret),
+        publishable_key: stripe_setting.publishable_key,
+        environment: stripe_setting.environment,
+        source: :database
+      }
+    else
+      # Fallback to environment variables
+      %{
+        secret_key: Application.get_env(:stripity_stripe, :api_key),
+        webhook_secret: Application.get_env(:overbooked, :stripe_webhook_secret),
+        publishable_key: nil,
+        environment: "env",
+        source: :environment
+      }
+    end
+  end
+
+  @doc """
+  Tests the Stripe connection using the configured API key.
+  """
+  def test_stripe_connection do
+    config = get_stripe_config()
+
+    if config.secret_key do
+      case Stripe.Balance.retrieve(api_key: config.secret_key) do
+        {:ok, _balance} ->
+          {:ok, :connected}
+
+        {:error, %Stripe.Error{message: message}} ->
+          {:error, message}
+
+        {:error, reason} ->
+          {:error, inspect(reason)}
+      end
+    else
+      {:error, "No Stripe API key configured"}
     end
   end
 end
