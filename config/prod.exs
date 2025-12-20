@@ -1,5 +1,34 @@
 import Config
 
+host =
+  System.get_env("PHX_HOST") ||
+    System.get_env("RAILWAY_PUBLIC_DOMAIN") ||
+    System.get_env("RAILWAY_STATIC_URL") ||
+    ""
+
+host =
+  host
+  |> String.trim()
+  |> String.trim_trailing("/")
+  |> String.replace(~r/^https?:\/\//, "")
+  |> String.replace(~r/\/.*$/, "")
+  |> String.replace(~r/:\d+$/, "")
+
+extra_origins =
+  System.get_env("PHX_ALLOWED_ORIGINS", "")
+  |> String.split(",", trim: true)
+  |> Enum.map(&String.trim/1)
+  |> Enum.reject(&(&1 == ""))
+
+check_origin =
+  if host == "" do
+    false
+  else
+    Enum.uniq(["//#{host}" | extra_origins])
+  end
+
+url_host = if host == "", do: "example.com", else: host
+
 # For production, don't forget to configure the url host
 # to something meaningful, Phoenix uses this information
 # when generating URLs.
@@ -10,6 +39,8 @@ import Config
 # which you should run after static files are built and
 # before starting your production server.
 config :overbooked, OverbookedWeb.Endpoint,
+  url: [host: url_host, port: 443, scheme: "https"],
+  check_origin: check_origin,
   cache_static_manifest: "priv/static/cache_manifest.json"
 
 # Do not print debug messages in production
