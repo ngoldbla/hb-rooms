@@ -35,7 +35,8 @@ Overbooked is a self-hosted flexible workplace platform for indie co-working own
 | `PHX_SERVER` | ✅ | Set to `true` |
 | `STRIPE_SECRET_KEY` | ✅ | Stripe API secret key from [dashboard.stripe.com](https://dashboard.stripe.com/apikeys) |
 | `STRIPE_WEBHOOK_SECRET` | ⚪ | Stripe webhook signing secret (for payment webhooks) |
-| `SENDINBLUE_API_KEY` | ⚪ | Sendinblue API key for emails |
+| `MAILGUN_API_KEY` | ⚪ | Mailgun private API key (or configure in-app at `/admin/settings`) |
+| `MAILGUN_DOMAIN` | ⚪ | Mailgun sending domain (or configure in-app at `/admin/settings`) |
 | `PORT` | ⚪ | Defaults to `4000` |
 | `POOL_SIZE` | ⚪ | Database pool size, defaults to `10` |
 
@@ -66,7 +67,7 @@ If a migration fails partway through (e.g., duplicate index error), the database
 ### Configs
 
 1. Domain
-2. Email provider
+2. Email provider (Mailgun): `docs/MAILGUN_RAILWAY.md`
 
 ## Features
 
