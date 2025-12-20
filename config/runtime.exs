@@ -56,8 +56,9 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   config :overbooked, Overbooked.Mailer,
-    adapter: Swoosh.Adapters.Resend,
-    api_key: System.get_env("RESEND_API_KEY")
+    adapter: Swoosh.Adapters.Mailgun,
+    api_key: System.get_env("MAILGUN_API_KEY") || "placeholder",
+    domain: System.get_env("MAILGUN_DOMAIN") || "placeholder"
 
   config :swoosh, :api_client, Swoosh.ApiClient.Hackney
 

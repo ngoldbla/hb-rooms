@@ -115,6 +115,12 @@ defmodule OverbookedWeb.LiveHelpers do
       >
         Amenities
       </:link>
+      <:link
+        active={@active_tab == :admin_settings}
+        navigate={Routes.admin_settings_path(@socket, :index)}
+      >
+        Settings
+      </:link>
     </.tabs>
     """
   end
