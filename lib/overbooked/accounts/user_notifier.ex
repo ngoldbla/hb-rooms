@@ -5,15 +5,44 @@ defmodule Overbooked.Accounts.UserNotifier do
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
+    {from_name, from_email} = get_from_address()
+
     email =
       new()
       |> to(recipient)
-      |> from({"Overbooked", "contact@example.com"})
+      |> from({from_name, from_email})
       |> subject(subject)
       |> text_body(body)
 
     with {:ok, _metadata} <- Mailer.deliver(email) do
       {:ok, email}
+    end
+  end
+
+  defp get_from_address do
+    # Try to get from database settings first
+    case get_mail_config() do
+      %{from_name: name, from_email: email} when not is_nil(email) ->
+        {name, email}
+
+      _ ->
+        # Fall back to application config or defaults
+        config = Application.get_env(:overbooked, :mail_defaults, [])
+        name = Keyword.get(config, :from_name, "Hatchbridge Rooms")
+        email = Keyword.get(config, :from_email, "noreply@example.com")
+        {name, email}
+    end
+  end
+
+  defp get_mail_config do
+    if Process.whereis(Overbooked.Repo) do
+      try do
+        Overbooked.Settings.get_mailgun_config()
+      rescue
+        _ -> nil
+      end
+    else
+      nil
     end
   end
 
