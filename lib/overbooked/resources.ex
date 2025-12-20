@@ -28,12 +28,6 @@ defmodule Overbooked.Resources do
   Includes a virtual has_active_contract field.
   """
   def list_resources_with_status do
-    active_contract_subquery =
-      from(c in Overbooked.Contracts.Contract,
-        where: c.status == :active,
-        select: c.resource_id
-      )
-
     from(r in Resource,
       left_join: rt in assoc(r, :resource_type),
       preload: [:amenities, :resource_type],
@@ -41,7 +35,13 @@ defmodule Overbooked.Resources do
     )
     |> Repo.all()
     |> Enum.map(fn resource ->
-      has_active = Repo.exists?(from c in active_contract_subquery, where: c.resource_id == ^resource.id)
+      has_active =
+        Repo.exists?(
+          from(c in Overbooked.Contracts.Contract,
+            where: c.status == :active and c.resource_id == ^resource.id
+          )
+        )
+
       Map.put(resource, :has_active_contract, has_active)
     end)
   end
