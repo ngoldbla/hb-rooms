@@ -100,9 +100,15 @@ defmodule OverbookedWeb.Router do
     live_session :redirect_if_user_is_authenticated,
       on_mount: [{OverbookedWeb.UserAuth, :redirect_if_user_is_authenticated}] do
       live "/login", LoginLive, :index
-      live "/signup/:token", SignupLive, :index
       live "/forgot-password", UserForgotPasswordLive, :index
       live "/reset-password/:token", UserResetPasswordLive, :index
+    end
+
+    # Signup with invitation token - allows authenticated users to access
+    # so they can see a message to log out first
+    live_session :signup,
+      on_mount: [{OverbookedWeb.UserAuth, :allow_authenticated_for_signup}] do
+      live "/signup/:token", SignupLive, :index
     end
 
     live_session :authenticated,

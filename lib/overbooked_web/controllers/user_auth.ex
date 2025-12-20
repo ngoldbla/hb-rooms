@@ -30,6 +30,26 @@ defmodule OverbookedWeb.UserAuth do
     end
   end
 
+  # For signup pages - allows authenticated users to proceed but assigns their info
+  # so the view can display a warning message
+  def on_mount(:allow_authenticated_for_signup, _params, session, socket) do
+    case session do
+      %{"user_token" => user_token} ->
+        current_user = Accounts.get_user_by_session_token(user_token)
+
+        {:cont,
+         socket
+         |> Component.assign(:current_user, current_user)
+         |> Component.assign(:is_admin, User.is_admin?(current_user))}
+
+      %{} ->
+        {:cont,
+         socket
+         |> Component.assign(:current_user, nil)
+         |> Component.assign(:is_admin, nil)}
+    end
+  end
+
   def on_mount(:ensure_authenticated, _params, session, socket) do
     case session do
       %{"user_token" => user_token} ->
