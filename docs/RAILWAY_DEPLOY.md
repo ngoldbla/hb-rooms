@@ -37,6 +37,8 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 
 **Link DATABASE_URL**: Click "Add Reference" → PostgreSQL → DATABASE_URL
 
+Note: `DATABASE_URL` should end up as a full Postgres URL (starting with `postgres://` or `postgresql://`). If you see a literal template like `{{Postgres.DATABASE_URL}}` or you manually prefixed `postgresql://` in front of a referenced URL, migrations will fail.
+
 ### 4. Deploy
 
 Railway will automatically:
