@@ -28,6 +28,7 @@ defmodule Overbooked.RuntimeConfig do
       System.get_env("RAILWAY_PUBLIC_DOMAIN") ||
       System.get_env("RAILWAY_STATIC_URL") ||
       "example.com"
+    |> normalize_host()
   end
 
   def fetch_allowed_origins(host) when is_binary(host) do
@@ -37,7 +38,19 @@ defmodule Overbooked.RuntimeConfig do
       |> Enum.map(&String.trim/1)
       |> Enum.reject(&(&1 == ""))
 
-    Enum.uniq(["https://#{host}" | extra])
+    Enum.uniq(["//#{host}" | extra])
+  end
+
+  defp normalize_host(host) when is_binary(host) do
+    host =
+      host
+      |> String.trim()
+      |> String.trim_trailing("/")
+      |> String.replace(~r/^https?:\/\//, "")
+      |> String.replace(~r/\/.*$/, "")
+      |> String.replace(~r/:\d+$/, "")
+
+    if host == "", do: "example.com", else: host
   end
 
   defp normalize_database_url(nil), do: nil
@@ -132,4 +145,3 @@ defmodule Overbooked.RuntimeConfig do
   defp present?(""), do: false
   defp present?(value) when is_binary(value), do: true
 end
-

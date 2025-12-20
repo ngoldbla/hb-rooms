@@ -6,6 +6,8 @@ defmodule Overbooked.Mailer do
   otherwise falls back to environment variable configuration.
   """
 
+  require Logger
+
   @doc """
   Delivers an email using the configured adapter.
 
@@ -15,19 +17,30 @@ defmodule Overbooked.Mailer do
   def deliver(email) do
     config = get_dynamic_config()
 
-    case config do
-      nil ->
-        # Fall back to application config (env vars)
-        Swoosh.Mailer.deliver(email, mailer_config())
+    result =
+      case config do
+        nil ->
+          # Fall back to application config (env vars)
+          Swoosh.Mailer.deliver(email, mailer_config())
 
-      mailgun_config ->
-        # Use database-configured Mailgun
-        adapter_config = [
-          adapter: Swoosh.Adapters.Mailgun,
-          api_key: mailgun_config.api_key,
-          domain: mailgun_config.domain
-        ]
-        Swoosh.Mailer.deliver(email, adapter_config)
+        mailgun_config ->
+          # Use database-configured Mailgun
+          adapter_config = [
+            adapter: Swoosh.Adapters.Mailgun,
+            api_key: mailgun_config.api_key,
+            domain: mailgun_config.domain
+          ]
+
+          Swoosh.Mailer.deliver(email, adapter_config)
+      end
+
+    case result do
+      {:error, reason} = error ->
+        Logger.error("Email delivery failed: #{inspect(reason)}")
+        error
+
+      other ->
+        other
     end
   end
 
