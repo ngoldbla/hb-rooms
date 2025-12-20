@@ -116,6 +116,18 @@ defmodule OverbookedWeb.LiveHelpers do
         Amenities
       </:link>
       <:link
+        active={@active_tab == :admin_spaces}
+        navigate={Routes.admin_spaces_path(@socket, :index)}
+      >
+        Spaces
+      </:link>
+      <:link
+        active={@active_tab == :admin_contracts}
+        navigate={Routes.admin_contracts_path(@socket, :index)}
+      >
+        Contracts
+      </:link>
+      <:link
         active={@active_tab == :admin_settings}
         navigate={Routes.admin_settings_path(@socket, :index)}
       >

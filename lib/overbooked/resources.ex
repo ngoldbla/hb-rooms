@@ -23,6 +23,29 @@ defmodule Overbooked.Resources do
     Repo.all(Resource)
   end
 
+  @doc """
+  Returns all resources with their rental status.
+  Includes a virtual has_active_contract field.
+  """
+  def list_resources_with_status do
+    active_contract_subquery =
+      from(c in Overbooked.Contracts.Contract,
+        where: c.status == :active,
+        select: c.resource_id
+      )
+
+    from(r in Resource,
+      left_join: rt in assoc(r, :resource_type),
+      preload: [:amenities, :resource_type],
+      order_by: [desc: r.is_rentable, asc: r.name]
+    )
+    |> Repo.all()
+    |> Enum.map(fn resource ->
+      has_active = Repo.exists?(from c in active_contract_subquery, where: c.resource_id == ^resource.id)
+      Map.put(resource, :has_active_contract, has_active)
+    end)
+  end
+
   def list_rooms(opts \\ []) do
     from(r in Resource,
       limit: ^Keyword.get(opts, :limit, 100),

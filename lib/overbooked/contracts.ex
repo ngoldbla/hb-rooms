@@ -161,6 +161,39 @@ defmodule Overbooked.Contracts do
   end
 
   @doc """
+  Lists all contracts with optional status filter.
+  For admin view.
+  """
+  def list_all_contracts(opts \\ []) do
+    status_filter = Keyword.get(opts, :status)
+
+    query =
+      from(c in Contract,
+        order_by: [desc: c.inserted_at],
+        preload: [:resource, :user]
+      )
+
+    query =
+      if status_filter && status_filter != "" && status_filter != "all" do
+        status_atom = String.to_existing_atom(status_filter)
+        from(c in query, where: c.status == ^status_atom)
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Admin cancel - cancels a contract without user authorization check.
+  """
+  def admin_cancel_contract(%Contract{} = contract) do
+    contract
+    |> Contract.cancel_changeset()
+    |> Repo.update()
+  end
+
+  @doc """
   Checks if a resource is available for a new contract during the given period.
   """
   def resource_available_for_contract?(%Resource{} = resource, start_date, end_date) do
