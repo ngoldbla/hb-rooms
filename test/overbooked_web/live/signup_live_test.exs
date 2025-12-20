@@ -22,9 +22,15 @@ defmodule OverbookedWeb.LiveTest do
       assert html =~ "Sign up"
     end
 
-    test "redirects if already logged in", %{conn: conn, token: token} do
-      conn = conn |> log_in_user(user_fixture()) |> get(Routes.signup_path(conn, :index, token))
-      assert redirected_to(conn) == "/"
+    test "shows warning if already logged in", %{conn: conn, token: token} do
+      logged_in_user = user_fixture()
+      conn = conn |> log_in_user(logged_in_user) |> get(Routes.signup_path(conn, :index, token))
+      {:ok, _view, html} = live(conn)
+
+      assert html =~ "Sign up"
+      assert html =~ "You're already logged in"
+      assert html =~ logged_in_user.email
+      assert html =~ "log out first"
     end
   end
 

@@ -15,75 +15,101 @@ defmodule OverbookedWeb.SignupLive do
     <.header label="Sign up"></.header>
     <.page>
       <div class="max-w-md mt-6">
-        <.form
-          :let={f}
-          for={@changeset}
-          phx-change={:validate}
-          phx-submit={:save}
-          id="signup-form"
-          class="flex flex-col space-y-4"
-        >
-          <div class="">
-            <label for="email" class="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <div class="mt-1">
-              <.text_input form={f} field={:email} phx_debounce="blur" required={true} />
-              <.error form={f} field={:email} />
+        <%= if @current_user do %>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">
+                  You're already logged in
+                </h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                  <p>
+                    You're currently signed in as <strong><%= @current_user.email %></strong>.
+                    To accept this invitation and create a new account, please
+                    <.link href={Routes.user_session_path(@socket, :delete)} method="delete" class="font-medium text-yellow-700 underline hover:text-yellow-600">
+                      log out first
+                    </.link>.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="">
-            <label for="name" class="block text-sm font-medium text-gray-700">
-              Full name
-            </label>
-            <div class="mt-1">
-              <.text_input form={f} field={:name} phx_debounce="blur" required={true} />
-              <.error form={f} field={:name} />
+        <% else %>
+          <.form
+            :let={f}
+            for={@changeset}
+            phx-change={:validate}
+            phx-submit={:save}
+            id="signup-form"
+            class="flex flex-col space-y-4"
+          >
+            <div class="">
+              <label for="email" class="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div class="mt-1">
+                <.text_input form={f} field={:email} phx_debounce="blur" required={true} />
+                <.error form={f} field={:email} />
+              </div>
             </div>
-          </div>
-          <div class="">
-            <label for="password" class="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div class="mt-1">
-              <.password_input
-                form={f}
-                phx_debounce="blur"
-                field={:password}
-                value={input_value(f, :password)}
-                required={true}
-              />
-              <.error form={f} field={:password} />
+            <div class="">
+              <label for="name" class="block text-sm font-medium text-gray-700">
+                Full name
+              </label>
+              <div class="mt-1">
+                <.text_input form={f} field={:name} phx_debounce="blur" required={true} />
+                <.error form={f} field={:name} />
+              </div>
             </div>
-          </div>
-          <div class="">
-            <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
-              Confirm password
-            </label>
-            <div class="mt-1">
-              <.password_input
-                form={f}
-                phx_debounce="blur"
-                field={:password_confirmation}
-                value={input_value(f, :password_confirmation)}
-                required={true}
-              />
-              <.error form={f} field={:password_confirmation} />
+            <div class="">
+              <label for="password" class="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div class="mt-1">
+                <.password_input
+                  form={f}
+                  phx_debounce="blur"
+                  field={:password}
+                  value={input_value(f, :password)}
+                  required={true}
+                />
+                <.error form={f} field={:password} />
+              </div>
             </div>
-          </div>
+            <div class="">
+              <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
+                Confirm password
+              </label>
+              <div class="mt-1">
+                <.password_input
+                  form={f}
+                  phx_debounce="blur"
+                  field={:password_confirmation}
+                  value={input_value(f, :password_confirmation)}
+                  required={true}
+                />
+                <.error form={f} field={:password_confirmation} />
+              </div>
+            </div>
 
-          <div class="py-2">
-            <.button type="submit" phx-disable-with="Registering...">Register</.button>
-          </div>
-        </.form>
+            <div class="py-2">
+              <.button type="submit" phx-disable-with="Registering...">Register</.button>
+            </div>
+          </.form>
 
-        <p>
-          <.link class="text-sm" navigate={Routes.login_path(@socket, :index)}>Log in</.link>
-          |
-          <.link class="text-sm" navigate={Routes.user_forgot_password_path(@socket, :index)}>
-            Forgot your password?
-          </.link>
-        </p>
+          <p>
+            <.link class="text-sm" navigate={Routes.login_path(@socket, :index)}>Log in</.link>
+            |
+            <.link class="text-sm" navigate={Routes.user_forgot_password_path(@socket, :index)}>
+              Forgot your password?
+            </.link>
+          </p>
+        <% end %>
       </div>
     </.page>
     """
