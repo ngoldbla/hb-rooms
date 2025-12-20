@@ -107,7 +107,7 @@ defmodule OverbookedWeb.Router do
     # Signup with invitation token - allows authenticated users to access
     # so they can see a message to log out first
     live_session :signup,
-      on_mount: [{OverbookedWeb.UserAuth, :allow_authenticated_for_signup}] do
+      on_mount: [{OverbookedWeb.UserAuth, :allow_authenticated_for_signup}, OverbookedWeb.Nav] do
       live "/signup/:token", SignupLive, :index
     end
 
