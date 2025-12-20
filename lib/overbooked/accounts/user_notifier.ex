@@ -1,9 +1,11 @@
 defmodule Overbooked.Accounts.UserNotifier do
   import Swoosh.Email
+  import Phoenix.Template, only: [render_to_string: 3]
 
   alias Overbooked.Mailer
+  alias OverbookedWeb.EmailView
 
-  # Delivers the email using the application mailer.
+  # Delivers the email using the application mailer (plain text only).
   defp deliver(recipient, subject, body) do
     {from_name, from_email} = get_from_address()
 
@@ -13,6 +15,43 @@ defmodule Overbooked.Accounts.UserNotifier do
       |> from({from_name, from_email})
       |> subject(subject)
       |> text_body(body)
+
+    with {:ok, _metadata} <- Mailer.deliver(email) do
+      {:ok, email}
+    end
+  end
+
+  # Delivers multipart email (HTML + text).
+  defp deliver_multipart(recipient, subject, template, assigns) do
+    {from_name, from_email} = get_from_address()
+
+    base_assigns =
+      assigns
+      |> Map.put(:subject, subject)
+      |> Map.put_new(:preheader, "")
+      |> Map.put(:logo_url, "#{OverbookedWeb.Endpoint.url()}/images/hatchbridge-logo.svg")
+      |> Map.put(:base_url, OverbookedWeb.Endpoint.url())
+      |> Map.put(:current_year, Date.utc_today().year)
+
+    # Render HTML email
+    html_body =
+      EmailView.render(template <> ".html", base_assigns)
+      |> Phoenix.HTML.Safe.to_iodata()
+      |> IO.iodata_to_binary()
+
+    # Render text email
+    text_body =
+      EmailView.render(template <> ".text", base_assigns)
+      |> Phoenix.HTML.Safe.to_iodata()
+      |> IO.iodata_to_binary()
+
+    email =
+      new()
+      |> to(recipient)
+      |> from({from_name, from_email})
+      |> subject(subject)
+      |> html_body(html_body)
+      |> text_body(text_body)
 
     with {:ok, _metadata} <- Mailer.deliver(email) do
       {:ok, email}
@@ -47,63 +86,41 @@ defmodule Overbooked.Accounts.UserNotifier do
   end
 
   @doc """
-  Deliver instructions to confirm account.
+  Deliver instructions to confirm account (invitation).
   """
   def deliver_user_invitation_instructions(email, url) do
-    deliver(email, "Confirmation instructions", """
+    user = %{name: email, email: email}
 
-    ==============================
-
-    Hi #{email},
-
-    You can register your account by visiting the URL below:
-
-    #{url}
-
-    If you didn't create an account with us, please ignore this.
-
-    ==============================
-    """)
+    deliver_multipart(
+      email,
+      "Welcome to Hatchbridge Rooms",
+      "welcome",
+      %{user: user, url: url, preheader: "Confirm your account to get started"}
+    )
   end
 
   @doc """
   Deliver instructions to confirm account.
   """
   def deliver_confirmation_instructions(user, url) do
-    deliver(user.email, "Confirmation instructions", """
-
-    ==============================
-
-    Hi #{user.email},
-
-    You can confirm your account by visiting the URL below:
-
-    #{url}
-
-    If you didn't create an account with us, please ignore this.
-
-    ==============================
-    """)
+    deliver_multipart(
+      user.email,
+      "Welcome to Hatchbridge Rooms",
+      "welcome",
+      %{user: user, url: url, preheader: "Confirm your account to get started"}
+    )
   end
 
   @doc """
   Deliver instructions to reset a user password.
   """
   def deliver_reset_password_instructions(user, url) do
-    deliver(user.email, "Reset password instructions", """
-
-    ==============================
-
-    Hi #{user.email},
-
-    You can reset your password by visiting the URL below:
-
-    #{url}
-
-    If you didn't request this change, please ignore this.
-
-    ==============================
-    """)
+    deliver_multipart(
+      user.email,
+      "Reset your password",
+      "password_reset",
+      %{user: user, url: url, preheader: "Reset your Hatchbridge Rooms password"}
+    )
   end
 
   @doc """
@@ -124,5 +141,21 @@ defmodule Overbooked.Accounts.UserNotifier do
 
     ==============================
     """)
+  end
+
+  @doc """
+  Deliver booking confirmation email.
+  """
+  def deliver_booking_confirmation(user, booking) do
+    deliver_multipart(
+      user.email,
+      "Your booking is confirmed",
+      "booking_confirmation",
+      %{
+        user: user,
+        booking: booking,
+        preheader: "#{booking.resource.name} - #{EmailView.format_date(booking.start_at)}"
+      }
+    )
   end
 end

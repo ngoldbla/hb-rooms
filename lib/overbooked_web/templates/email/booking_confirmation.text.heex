@@ -1,0 +1,13 @@
+Your booking is confirmed
+
+Hi <%= @user.name %>,
+
+Your booking has been confirmed. Here are the details:
+
+Resource: <%= @booking.resource.name %>
+Date: <%= OverbookedWeb.EmailView.format_date(@booking.start_at) %>
+Time: <%= OverbookedWeb.EmailView.format_time_range(@booking) %>
+
+We look forward to seeing you!
+
+View your bookings: <%= @base_url %>
