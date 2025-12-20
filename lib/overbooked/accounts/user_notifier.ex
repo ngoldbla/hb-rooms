@@ -1,6 +1,5 @@
 defmodule Overbooked.Accounts.UserNotifier do
   import Swoosh.Email
-  import Phoenix.Template, only: [render_to_string: 3]
 
   alias Overbooked.Mailer
   alias OverbookedWeb.EmailView
