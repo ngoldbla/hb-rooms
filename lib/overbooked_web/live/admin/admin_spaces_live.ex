@@ -51,8 +51,8 @@ defmodule OverbookedWeb.AdminSpacesLive do
       <.form
         :let={f}
         for={@changeset}
-        phx-submit={:create}
-        phx-change={:validate}
+        phx-submit="create"
+        phx-change="validate"
         id="add-space-form"
         class="flex flex-col space-y-4"
       >

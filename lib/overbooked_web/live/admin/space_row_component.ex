@@ -15,8 +15,8 @@ defmodule OverbookedWeb.SpaceRowComponent do
         <.form
           :let={f}
           for={@changeset}
-          phx-change={:validate_update}
-          phx-submit={:update}
+          phx-change="validate_update"
+          phx-submit="update"
           id={"edit-space-form-#{@space.id}"}
           class="flex flex-col space-y-4"
         >

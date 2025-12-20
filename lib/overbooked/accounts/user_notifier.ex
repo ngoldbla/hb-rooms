@@ -157,4 +157,38 @@ defmodule Overbooked.Accounts.UserNotifier do
       }
     )
   end
+
+  @doc """
+  Deliver contract confirmation email after successful payment.
+  Contract should be preloaded with :resource and :user associations.
+  """
+  def deliver_contract_confirmation(user, contract) do
+    deliver_multipart(
+      user.email,
+      "Your contract is confirmed",
+      "contract_confirmation",
+      %{
+        user: user,
+        contract: contract,
+        preheader: "#{contract.resource.name} - #{contract.duration_months} month contract confirmed"
+      }
+    )
+  end
+
+  @doc """
+  Deliver contract cancellation email.
+  Contract should be preloaded with :resource association.
+  """
+  def deliver_contract_cancelled(user, contract) do
+    deliver_multipart(
+      user.email,
+      "Contract cancelled",
+      "contract_cancelled",
+      %{
+        user: user,
+        contract: contract,
+        preheader: "Your #{contract.resource.name} contract has been cancelled"
+      }
+    )
+  end
 end

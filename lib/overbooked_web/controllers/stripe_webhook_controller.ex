@@ -50,7 +50,7 @@ defmodule OverbookedWeb.StripeWebhookController do
     case Contracts.create_and_activate_contract(attrs) do
       {:ok, contract} ->
         Logger.info("Contract #{contract.id} activated successfully")
-        # TODO: Send confirmation email
+        send_contract_confirmation_email(contract)
         :ok
 
       {:error, :resource_busy} ->
@@ -61,6 +61,19 @@ defmodule OverbookedWeb.StripeWebhookController do
       {:error, reason} ->
         Logger.error("Failed to activate contract: #{inspect(reason)}")
         :error
+    end
+  end
+
+  defp send_contract_confirmation_email(contract) do
+    # Preload associations needed for the email
+    contract = Overbooked.Repo.preload(contract, [:user, :resource])
+
+    case Overbooked.Accounts.UserNotifier.deliver_contract_confirmation(contract.user, contract) do
+      {:ok, _email} ->
+        Logger.info("Contract confirmation email sent for contract #{contract.id}")
+
+      {:error, reason} ->
+        Logger.error("Failed to send contract confirmation email: #{inspect(reason)}")
     end
   end
 

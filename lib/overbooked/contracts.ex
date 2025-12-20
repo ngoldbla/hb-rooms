@@ -191,6 +191,14 @@ defmodule Overbooked.Contracts do
     contract
     |> Contract.cancel_changeset()
     |> Repo.update()
+    |> case do
+      {:ok, cancelled_contract} ->
+        send_cancellation_email(cancelled_contract)
+        {:ok, cancelled_contract}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -214,8 +222,30 @@ defmodule Overbooked.Contracts do
       contract
       |> Contract.cancel_changeset()
       |> Repo.update()
+      |> case do
+        {:ok, cancelled_contract} ->
+          send_cancellation_email(cancelled_contract)
+          {:ok, cancelled_contract}
+
+        error ->
+          error
+      end
     else
       {:error, :unauthorized}
+    end
+  end
+
+  defp send_cancellation_email(contract) do
+    contract = Repo.preload(contract, [:user, :resource])
+
+    case Overbooked.Accounts.UserNotifier.deliver_contract_cancelled(contract.user, contract) do
+      {:ok, _email} ->
+        :ok
+
+      {:error, reason} ->
+        require Logger
+        Logger.error("Failed to send contract cancellation email: #{inspect(reason)}")
+        :error
     end
   end
 
