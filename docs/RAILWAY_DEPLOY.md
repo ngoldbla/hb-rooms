@@ -58,6 +58,12 @@ Railway will automatically:
 4. Events: `checkout.session.completed`, `payment_intent.succeeded`
 5. Copy the signing secret to `STRIPE_WEBHOOK_SECRET`
 
+## Email (Mailgun)
+
+To enable transactional email (invites, password resets, etc.) with Mailgun, follow:
+
+- `docs/MAILGUN_RAILWAY.md`
+
 ## Seed Data
 
 After deployment, make resources rentable:
@@ -88,6 +94,8 @@ room |> Ecto.Changeset.change(%{is_rentable: true, monthly_rate_cents: 50000, de
 | `PORT` | Recommended | Default: 4000 |
 | `STRIPE_SECRET_KEY` | ✅ | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe webhook signing secret |
+| `MAILGUN_API_KEY` | Recommended | Mailgun private API key (fallback if in-app email settings are disabled) |
+| `MAILGUN_DOMAIN` | Recommended | Mailgun sending domain (fallback if in-app email settings are disabled) |
 
 ## Troubleshooting
 
