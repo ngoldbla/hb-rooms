@@ -2,11 +2,15 @@ defmodule Overbooked.Stripe do
   @moduledoc """
   Stripe integration for office space contracts.
   Handles checkout session creation and payment processing.
+
+  Configuration is read from the database (via Settings context) with
+  fallback to environment variables.
   """
 
   alias Overbooked.Contracts
   alias Overbooked.Resources.Resource
   alias Overbooked.Accounts.User
+  alias Overbooked.Settings
 
   @doc """
   Creates a Stripe Checkout Session for a contract.
@@ -23,57 +27,86 @@ defmodule Overbooked.Stripe do
     - `{:error, reason}` on failure
   """
   def create_checkout_session(%Resource{} = resource, duration_months, %User{} = user, success_url, cancel_url) do
-    monthly_rate = resource.monthly_rate_cents
-    total = Contracts.calculate_total(monthly_rate, duration_months)
-    start_date = Date.utc_today()
-    end_date = Date.add(start_date, duration_months * 30)
+    config = Settings.get_stripe_config()
 
-    line_item_name = "#{resource.name} - #{duration_months} Month Contract"
+    unless config.secret_key do
+      {:error, "Stripe is not configured. Please configure Stripe in Admin → Settings."}
+    else
+      monthly_rate = resource.monthly_rate_cents
+      total = Contracts.calculate_total(monthly_rate, duration_months)
+      start_date = Date.utc_today()
+      end_date = Date.add(start_date, duration_months * 30)
 
-    line_item_description =
-      "Office space rental from #{format_date(start_date)} to #{format_date(end_date)}"
+      line_item_name = "#{resource.name} - #{duration_months} Month Contract"
 
-    params = %{
-      mode: "payment",
-      customer_email: user.email,
-      line_items: [
-        %{
-          price_data: %{
-            currency: "usd",
-            unit_amount: total,
-            product_data: %{
-              name: line_item_name,
-              description: line_item_description
-            }
-          },
-          quantity: 1
-        }
-      ],
-      metadata: %{
-        resource_id: to_string(resource.id),
-        user_id: to_string(user.id),
-        duration_months: to_string(duration_months),
-        monthly_rate_cents: to_string(monthly_rate)
-      },
-      success_url: success_url,
-      cancel_url: cancel_url
-    }
+      line_item_description =
+        "Office space rental from #{format_date(start_date)} to #{format_date(end_date)}"
 
-    Stripe.Checkout.Session.create(params)
+      params = %{
+        mode: "payment",
+        customer_email: user.email,
+        line_items: [
+          %{
+            price_data: %{
+              currency: "usd",
+              unit_amount: total,
+              product_data: %{
+                name: line_item_name,
+                description: line_item_description
+              }
+            },
+            quantity: 1
+          }
+        ],
+        metadata: %{
+          resource_id: to_string(resource.id),
+          user_id: to_string(user.id),
+          duration_months: to_string(duration_months),
+          monthly_rate_cents: to_string(monthly_rate)
+        },
+        success_url: success_url,
+        cancel_url: cancel_url
+      }
+
+      Stripe.Checkout.Session.create(params, api_key: config.secret_key)
+    end
   end
 
   @doc """
   Retrieves a Stripe Checkout Session by ID.
   """
   def get_checkout_session(session_id) do
-    Stripe.Checkout.Session.retrieve(session_id)
+    config = Settings.get_stripe_config()
+    Stripe.Checkout.Session.retrieve(session_id, api_key: config.secret_key)
   end
 
   @doc """
   Constructs and validates a Stripe webhook event.
+  Uses the webhook secret from Settings (DB) or environment.
+  """
+  def construct_webhook_event(payload, signature) do
+    config = Settings.get_stripe_config()
+
+    unless config.webhook_secret do
+      {:error, "Webhook secret not configured"}
+    else
+      Stripe.Webhook.construct_event(payload, signature, config.webhook_secret)
+    end
+  end
+
+  @doc """
+  Constructs and validates a Stripe webhook event with explicit secret.
+  Kept for backwards compatibility.
   """
   def construct_webhook_event(payload, signature, webhook_secret) do
     Stripe.Webhook.construct_event(payload, signature, webhook_secret)
+  end
+
+  @doc """
+  Returns the current Stripe configuration source (:database or :environment).
+  """
+  def config_source do
+    Settings.get_stripe_config().source
   end
 
   defp format_date(%Date{} = date) do
