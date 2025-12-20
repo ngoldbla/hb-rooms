@@ -18,7 +18,7 @@ defmodule Overbooked.Settings.MailSetting do
     mail_setting
     |> cast(attrs, [:adapter, :mailgun_api_key, :mailgun_domain, :from_email, :from_name, :enabled])
     |> validate_required_when_enabled()
-    |> validate_format(:from_email, ~r/@/, message: "must be a valid email address")
+    |> validate_email_format()
   end
 
   defp validate_required_when_enabled(changeset) do
@@ -28,6 +28,14 @@ defmodule Overbooked.Settings.MailSetting do
           message: "is required when email is enabled")
     else
       changeset
+    end
+  end
+
+  defp validate_email_format(changeset) do
+    case get_field(changeset, :from_email) do
+      nil -> changeset
+      "" -> changeset
+      _email -> validate_format(changeset, :from_email, ~r/@/, message: "must be a valid email address")
     end
   end
 
