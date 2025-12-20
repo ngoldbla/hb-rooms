@@ -17,7 +17,7 @@
 | Stripe Checkout | ✅ Complete | `lib/overbooked/stripe.ex`, `stripe_webhook_controller.ex` |
 | Contracts (User) | ✅ Complete | `lib/overbooked_web/live/contracts_live.ex`, `contracts.ex` |
 | Stripe Admin Settings | ✅ Complete | `lib/overbooked/settings/stripe_setting.ex`, `admin_settings_live.ex` |
-| Admin Spaces | ✅ Complete | `lib/overbooked_web/live/admin/admin_spaces_live.ex` |
+| Admin Spaces | ✅ Fixed | `lib/overbooked_web/live/admin/admin_spaces_live.ex`, `resources.ex` |
 | Admin Contracts | ✅ Complete | `lib/overbooked_web/live/admin/admin_contracts_live.ex` |
 | Nav Integration | ✅ Fixed | `lib/overbooked_web/live/nav.ex`, `templates/layout/live.html.heex` |
 | Contract Emails | ✅ Complete | `templates/email/contract_confirmation.html.heex`, `contract_cancelled.html.heex` |
@@ -484,6 +484,7 @@ CREATE UNIQUE INDEX mail_settings_singleton ON mail_settings (id) WHERE id IS NO
 
 ## Admin Spaces
 - [x] Navigation works (nav.ex + layout.heex fixed)
+- [x] Page loads without error (fixed query composition bug in list_resources_with_status)
 - [ ] Can create new rentable space with pricing
 - [ ] Can edit existing space
 - [ ] Can toggle is_rentable
