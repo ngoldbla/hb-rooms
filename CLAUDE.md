@@ -19,6 +19,7 @@
 | Stripe Admin Settings | ✅ Complete | `lib/overbooked/settings/stripe_setting.ex`, `admin_settings_live.ex` |
 | Admin Spaces | ✅ Complete | `lib/overbooked_web/live/admin/admin_spaces_live.ex` |
 | Admin Contracts | ✅ Complete | `lib/overbooked_web/live/admin/admin_contracts_live.ex` |
+| Nav Integration | ✅ Fixed | `lib/overbooked_web/live/nav.ex`, `templates/layout/live.html.heex` |
 | Contract Emails | ✅ Complete | `templates/email/contract_confirmation.html.heex`, `contract_cancelled.html.heex` |
 
 ## Brand Assets
@@ -482,10 +483,18 @@ CREATE UNIQUE INDEX mail_settings_singleton ON mail_settings (id) WHERE id IS NO
 - [ ] Falls back to env vars when DB config disabled
 
 ## Admin Spaces
+- [x] Navigation works (nav.ex + layout.heex fixed)
 - [ ] Can create new rentable space with pricing
 - [ ] Can edit existing space
 - [ ] Can toggle is_rentable
 - [ ] Shows availability status
+
+## Admin Contracts
+- [x] Navigation works (nav.ex + layout.heex fixed)
+- [ ] View all contracts with user info
+- [ ] Filter by status works
+- [ ] Contract detail modal shows correctly
+- [ ] Admin cancel works
 
 ---
 
