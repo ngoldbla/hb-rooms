@@ -47,6 +47,9 @@ defmodule OverbookedWeb.Nav do
         {OverbookedWeb.AdminAmenitiesLive, _} ->
           :admin_amenities
 
+        {OverbookedWeb.AdminSettingsLive, _} ->
+          :admin_settings
+
         {OverbookedWeb.UserSettingsLive, _} ->
           :settings
 
