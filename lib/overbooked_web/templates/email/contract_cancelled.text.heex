@@ -1,0 +1,24 @@
+Contract Cancelled
+
+Hi <%= @user.name %>,
+
+Your office space contract has been cancelled.
+
+CANCELLED CONTRACT DETAILS
+==========================
+
+Space: <%= @contract.resource.name %>
+
+Original Contract Period: <%= OverbookedWeb.EmailView.format_contract_date(@contract.start_date) %> to <%= OverbookedWeb.EmailView.format_contract_date(@contract.end_date) %>
+
+Status: Cancelled
+
+==========================
+
+If you have any questions about this cancellation or would like to rent another space, please don't hesitate to reach out.
+
+Browse available spaces: <%= @base_url %>/spaces
+
+---
+Hatchbridge Rooms
+<%= @base_url %>

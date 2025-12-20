@@ -32,4 +32,22 @@ defmodule OverbookedWeb.EmailView do
     {:ok, end_time} = Timex.format(booking.end_at, "{h12}:{m} {AM}")
     "#{start_time} - #{end_time}"
   end
+
+  @doc """
+  Formats a Date for contract email display.
+  """
+  def format_contract_date(%Date{} = date) do
+    Calendar.strftime(date, "%B %d, %Y")
+  end
+
+  def format_contract_date(_), do: ""
+
+  @doc """
+  Formats cents as a price string for email display.
+  """
+  def format_price(cents) when is_integer(cents) do
+    Overbooked.Contracts.format_price(cents)
+  end
+
+  def format_price(_), do: "$0.00"
 end
