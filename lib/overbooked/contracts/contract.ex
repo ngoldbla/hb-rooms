@@ -55,6 +55,7 @@ defmodule Overbooked.Contracts.Contract do
   """
   def cancel_changeset(contract) do
     contract
+    |> change()
     |> put_change(:status, :cancelled)
   end
 
