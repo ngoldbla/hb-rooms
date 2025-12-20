@@ -43,7 +43,7 @@
         <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0">
           <tr>
             <td align="center" style="padding-bottom: 32px;">
-              <img src="<%= @logo_url %>" alt="Hatchbridge Rooms" width="180" style="height: auto;">
+              <img src={@logo_url} alt="Hatchbridge Rooms" width="180" style="height: auto;">
             </td>
           </tr>
 
@@ -107,7 +107,7 @@
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <a href="<%= @base_url %>" class="button" style="display: inline-block; padding: 14px 28px; background-color: #FFC421; color: #000824 !important; text-decoration: none; border-radius: 6px; font-weight: 600; font-family: 'Nunito Sans', Arial, sans-serif;">
+                    <a href={@base_url} class="button" style="display: inline-block; padding: 14px 28px; background-color: #FFC421; color: #000824 !important; text-decoration: none; border-radius: 6px; font-weight: 600; font-family: 'Nunito Sans', Arial, sans-serif;">
                       View My Bookings
                     </a>
                   </td>
@@ -120,7 +120,7 @@
             <td align="center" style="padding-top: 32px;">
               <p class="text-secondary" style="margin: 0; color: #6b7280; font-size: 12px;">
                 Hatchbridge Rooms<br>
-                <a href="<%= @base_url %>" style="color: #6b7280;">Visit Dashboard</a>
+                <a href={@base_url} style="color: #6b7280;">Visit Dashboard</a>
               </p>
               <p style="margin: 16px 0 0; color: #9ca3af; font-size: 11px;">
                 © <%= @current_year %> Hatchbridge. All rights reserved.
