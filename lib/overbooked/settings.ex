@@ -109,7 +109,7 @@ defmodule Overbooked.Settings do
       email =
         new()
         |> to(to_email)
-        |> from({config.from_name, config.from_email})
+        |> Swoosh.Email.from({config.from_name, config.from_email})
         |> subject("Test Email from Hatchbridge Rooms")
         |> text_body("""
         This is a test email from Hatchbridge Rooms.
