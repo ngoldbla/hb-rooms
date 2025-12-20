@@ -1,118 +1,281 @@
-<!-- Static sidebar for desktop -->
-<div class="flex flex-shrink-0" role="region">
-  <div class="flex flex-col w-64 border-r border-gray-200 pt-5 bg-gray-100">
-    <div class="flex items-center flex-shrink-0 px-6">
-      <.link class="w-full rounded-md flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-4 focus:ring-primary-500 focus:border-primary-500" navigate={Routes.home_path(@socket, :index)}>
-        <img class="h-9" src={Routes.static_path(@socket, "/images/hatchbridge-logo.svg")} alt="Hatchbridge" />
-      </.link>
-    </div>
-    <!-- Sidebar component, swap this element with another sidebar if you like -->
-    <div class="flex-1 flex flex-col overflow-y-auto mt-8 p-1">
-      <%= if @current_user do %>
-        <.dropdown id="user-dropdown">
-          <:title><%= @current_user.name %></:title>
-          <:subtitle><%= @current_user.email %></:subtitle>
-          <:link navigate={Routes.user_settings_path(@socket, :index)}>Settings</:link>
-          <:link href={Routes.user_session_path(@socket, :delete)} method={:delete}>
-            Log out
-          </:link>
-        </.dropdown>
-      <% end %>
-      <!-- Navigation -->
-      <nav class="flex-1 px-3 mt-6 mb-2">
-        <div class="flex flex-col h-full justify-between">
-          <div class="space-y-2">
-            <%= if @current_user do %>
-              <.link
-                navigate={Routes.home_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :home, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  outlined={true}
-                  name={:home}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> Home
-              </.link>
-              <.link
-                navigate={Routes.schedule_monthly_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :schedule_monthly, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  outlined={true}
-                  name={:calendar}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> Schedule
-              </.link>
-              <.link
-                navigate={Routes.rooms_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :rooms, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  outlined={true}
-                  name={:presentation_chart_bar}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> Rooms
-              </.link>
-              <.link
-                navigate={Routes.desks_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :desks, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  outlined={true}
-                  name={:desktop_computer}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> Desks
-              </.link>
-              <.link
-                navigate={Routes.spaces_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :spaces, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  outlined={true}
-                  name={:office_building}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> Spaces
-              </.link>
-              <.link
-                navigate={Routes.contracts_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :contracts, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  outlined={true}
-                  name={:document_text}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> My Contracts
-              </.link>
-            <% end %>
-          </div>
+<div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
 
-          <div class="space-y-2">
-            <%= if @is_admin do %>
-              <hr class="-mx-3" />
-              <.link
-                navigate={Routes.admin_users_path(@socket, :index)}
-                class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab in [:admin_users, :admin_rooms, :admin_desks, :admin_amenities, :admin_settings], do: "bg-gray-200", else: "hover:bg-gray-50"}"}
-              >
-                <.icon
-                  name={:cog}
-                  class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
-                /> Admin
-              </.link>
-            <% end %>
+  <!-- Mobile backdrop -->
+  <div
+    x-show="sidebarOpen"
+    x-transition:enter="transition-opacity ease-linear duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition-opacity ease-linear duration-300"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
+    @click="sidebarOpen = false"
+    style="display: none;"
+  ></div>
+
+  <!-- Mobile sidebar -->
+  <div
+    x-show="sidebarOpen"
+    x-transition:enter="transition ease-in-out duration-300 transform"
+    x-transition:enter-start="-translate-x-full"
+    x-transition:enter-end="translate-x-0"
+    x-transition:leave="transition ease-in-out duration-300 transform"
+    x-transition:leave-start="translate-x-0"
+    x-transition:leave-end="-translate-x-full"
+    @keydown.escape.window="sidebarOpen = false"
+    class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-gray-100 lg:hidden"
+    style="display: none;"
+  >
+    <!-- Close button -->
+    <div class="absolute top-0 right-0 -mr-12 pt-2">
+      <button @click="sidebarOpen = false" class="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-white">
+        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Sidebar content (copy of desktop sidebar) -->
+    <div class="flex flex-col flex-1 border-r border-gray-200 pt-5">
+      <div class="flex items-center flex-shrink-0 px-6">
+        <.link class="w-full rounded-md flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-4 focus:ring-primary-500 focus:border-primary-500" navigate={Routes.home_path(@socket, :index)}>
+          <img class="h-9" src={Routes.static_path(@socket, "/images/hatchbridge-logo.svg")} alt="Hatchbridge" />
+        </.link>
+      </div>
+
+      <div class="flex-1 flex flex-col overflow-y-auto mt-8 p-1">
+        <%= if @current_user do %>
+          <.dropdown id="user-dropdown-mobile">
+            <:title><%= @current_user.name %></:title>
+            <:subtitle><%= @current_user.email %></:subtitle>
+            <:link navigate={Routes.user_settings_path(@socket, :index)}>Settings</:link>
+            <:link href={Routes.user_session_path(@socket, :delete)} method={:delete}>
+              Log out
+            </:link>
+          </.dropdown>
+        <% end %>
+
+        <nav class="flex-1 px-3 mt-6 mb-2">
+          <div class="flex flex-col h-full justify-between">
+            <div class="space-y-2">
+              <%= if @current_user do %>
+                <.link
+                  navigate={Routes.home_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :home, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:home}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Home
+                </.link>
+                <.link
+                  navigate={Routes.schedule_monthly_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :schedule_monthly, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:calendar}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Schedule
+                </.link>
+                <.link
+                  navigate={Routes.rooms_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :rooms, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:presentation_chart_bar}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Rooms
+                </.link>
+                <.link
+                  navigate={Routes.desks_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :desks, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:desktop_computer}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Desks
+                </.link>
+                <.link
+                  navigate={Routes.spaces_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :spaces, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:office_building}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Spaces
+                </.link>
+                <.link
+                  navigate={Routes.contracts_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :contracts, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:document_text}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> My Contracts
+                </.link>
+              <% end %>
+            </div>
+
+            <div class="space-y-2">
+              <%= if @is_admin do %>
+                <hr class="-mx-3" />
+                <.link
+                  navigate={Routes.admin_users_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab in [:admin_users, :admin_rooms, :admin_desks, :admin_amenities, :admin_settings], do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    name={:cog}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Admin
+                </.link>
+              <% end %>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
     </div>
   </div>
-</div>
-<.live_component module={OverbookedWeb.LayoutComponent} id="layout" />
-<!-- Main column -->
-<div class="flex flex-col w-0 flex-1 overflow-hidden">
-  <div class="fixed z-10 top-2 right-2 flex flex-col space-y-1">
-    <.flash flash={@flash} kind={:info} />
-    <.flash flash={@flash} kind={:error} />
+
+  <!-- Desktop sidebar (hidden on mobile, visible on lg+) -->
+  <div class="hidden lg:flex flex-shrink-0" role="region">
+    <div class="flex flex-col w-64 border-r border-gray-200 pt-5 bg-gray-100">
+      <div class="flex items-center flex-shrink-0 px-6">
+        <.link class="w-full rounded-md flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-4 focus:ring-primary-500 focus:border-primary-500" navigate={Routes.home_path(@socket, :index)}>
+          <img class="h-9" src={Routes.static_path(@socket, "/images/hatchbridge-logo.svg")} alt="Hatchbridge" />
+        </.link>
+      </div>
+
+      <div class="flex-1 flex flex-col overflow-y-auto mt-8 p-1">
+        <%= if @current_user do %>
+          <.dropdown id="user-dropdown">
+            <:title><%= @current_user.name %></:title>
+            <:subtitle><%= @current_user.email %></:subtitle>
+            <:link navigate={Routes.user_settings_path(@socket, :index)}>Settings</:link>
+            <:link href={Routes.user_session_path(@socket, :delete)} method={:delete}>
+              Log out
+            </:link>
+          </.dropdown>
+        <% end %>
+
+        <nav class="flex-1 px-3 mt-6 mb-2">
+          <div class="flex flex-col h-full justify-between">
+            <div class="space-y-2">
+              <%= if @current_user do %>
+                <.link
+                  navigate={Routes.home_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :home, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:home}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Home
+                </.link>
+                <.link
+                  navigate={Routes.schedule_monthly_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :schedule_monthly, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:calendar}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Schedule
+                </.link>
+                <.link
+                  navigate={Routes.rooms_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :rooms, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:presentation_chart_bar}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Rooms
+                </.link>
+                <.link
+                  navigate={Routes.desks_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :desks, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:desktop_computer}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Desks
+                </.link>
+                <.link
+                  navigate={Routes.spaces_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :spaces, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:office_building}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Spaces
+                </.link>
+                <.link
+                  navigate={Routes.contracts_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab == :contracts, do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    outlined={true}
+                    name={:document_text}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> My Contracts
+                </.link>
+              <% end %>
+            </div>
+
+            <div class="space-y-2">
+              <%= if @is_admin do %>
+                <hr class="-mx-3" />
+                <.link
+                  navigate={Routes.admin_users_path(@socket, :index)}
+                  class={"focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-700 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md #{if @active_tab in [:admin_users, :admin_rooms, :admin_desks, :admin_amenities, :admin_settings], do: "bg-gray-200", else: "hover:bg-gray-50"}"}
+                >
+                  <.icon
+                    name={:cog}
+                    class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6"
+                  /> Admin
+                </.link>
+              <% end %>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
   </div>
-  <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none">
-    <%= @inner_content %>
-  </main>
+
+  <.live_component module={OverbookedWeb.LayoutComponent} id="layout" />
+
+  <!-- Main content area -->
+  <div class="flex flex-col w-0 flex-1 overflow-hidden">
+
+    <!-- Mobile header -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-16 items-center bg-white border-b border-gray-200 px-4">
+      <button @click="sidebarOpen = true" class="text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">
+        <span class="sr-only">Open sidebar</span>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <img src={Routes.static_path(@socket, "/images/hatchbridge-logo.svg")} alt="Hatchbridge" class="ml-4 h-8" />
+    </div>
+
+    <!-- Flash messages (adjusted for mobile header) -->
+    <div class="fixed z-40 top-2 lg:top-2 right-2 flex flex-col space-y-1 mt-16 lg:mt-0">
+      <.flash flash={@flash} kind={:info} />
+      <.flash flash={@flash} kind={:error} />
+    </div>
+
+    <!-- Main content (add pt-16 on mobile for header) -->
+    <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none pt-16 lg:pt-0">
+      <%= @inner_content %>
+    </main>
+  </div>
 </div>

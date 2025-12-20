@@ -380,7 +380,7 @@ defmodule OverbookedWeb.LiveHelpers do
           <div
             id={"#{@id}-container"}
             class={
-              "#{if @show, do: "fade-in-scale", else: "hidden"} sticky inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-6"
+              "#{if @show, do: "fade-in-scale", else: "hidden"} sticky inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-6 max-h-screen lg:max-h-auto overflow-y-auto"
             }
             phx-key="escape"
           >
@@ -409,12 +409,13 @@ defmodule OverbookedWeb.LiveHelpers do
                 </div>
               </div>
             </div>
-            <div class="sm:ml-4 mr-4 mt-8 flex flex-row-reverse space-x-2 space-x-reverse">
+            <div class="sm:ml-4 mr-4 mt-8 flex flex-col sm:flex-row sm:flex-row-reverse space-y-2 sm:space-y-0 sm:space-x-2 sm:space-x-reverse">
               <%= for confirm <- @confirm do %>
                 <.button
                   id={"#{@id}-confirm"}
                   phx-click={@on_confirm}
                   phx-disable-with
+                  class="w-full sm:w-auto justify-center min-h-[44px]"
                   {Phoenix.Component.assigns_to_attributes(confirm)}
                 >
                   <%= render_slot(confirm) %>
@@ -423,6 +424,7 @@ defmodule OverbookedWeb.LiveHelpers do
               <%= for cancel <- @cancel do %>
                 <.button
                   phx-click={hide_modal(@on_cancel, @id)}
+                  class="w-full sm:w-auto justify-center min-h-[44px]"
                   {Phoenix.Component.assigns_to_attributes(cancel)}
                 >
                   <%= render_slot(cancel) %>
@@ -547,6 +549,81 @@ defmodule OverbookedWeb.LiveHelpers do
 
   defp button_classes_base() do
     "font-medium inline-flex items-center border shadow-sm rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+  end
+
+  @doc """
+  Mobile-friendly responsive list/table component.
+
+  Renders as cards on mobile and table on desktop.
+
+  ## Example
+
+      <.card_list items={@bookings}>
+        <:card :let={booking}>
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-medium text-gray-900"><%= booking.resource.name %></p>
+              <p class="text-sm text-gray-500"><%= format_date(booking.start_at) %></p>
+            </div>
+            <.badge color="green">Active</.badge>
+          </div>
+        </:card>
+        <:col :let={booking} label="Resource">
+          <%= booking.resource.name %>
+        </:col>
+        <:col :let={booking} label="Date">
+          <%= format_date(booking.start_at) %>
+        </:col>
+        <:col :let={booking} label="Status">
+          <.badge color="green">Active</.badge>
+        </:col>
+      </.card_list>
+  """
+  attr :items, :list, required: true
+  slot :card, required: true
+  slot :col, required: true do
+    attr :label, :string
+  end
+
+  def card_list(assigns) do
+    ~H"""
+    <!-- Mobile: Card view -->
+    <div class="space-y-4 sm:hidden mt-4">
+      <%= for item <- @items do %>
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-4 min-h-[44px]">
+          <%= render_slot(@card, item) %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Desktop: Table view -->
+    <div class="hidden sm:block mt-8">
+      <div class="align-middle inline-block min-w-full border-b border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200 border-t border-r border-l">
+          <thead>
+            <tr class="border-t border-gray-200">
+              <%= for col <- @col do %>
+                <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <%= col[:label] %>
+                </th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <%= for item <- @items do %>
+              <tr class="hover:bg-gray-50">
+                <%= for col <- @col do %>
+                  <td class="px-6 py-3 text-sm text-gray-900">
+                    <%= render_slot(col, item) %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    """
   end
 
   attr :id, :any
