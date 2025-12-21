@@ -294,9 +294,7 @@ defmodule OverbookedWeb.ScheduleLive.Calendar do
           </.event_row>
         <% end %>
       <% end %>
-      <%= unless @older do %>
-        <:confirm>Book</:confirm>
-      <% end %>
+      <:confirm :if={not @older}>Book</:confirm>
       <:cancel>Close</:cancel>
     </.modal>
     """
