@@ -191,4 +191,21 @@ defmodule Overbooked.Accounts.UserNotifier do
       }
     )
   end
+
+  @doc """
+  Deliver refund notification email.
+  Contract should be preloaded with :resource association and have refund fields populated.
+  """
+  def deliver_refund_notification(user, contract) do
+    deliver_multipart(
+      user.email,
+      "Refund processed for your contract",
+      "refund_notification",
+      %{
+        user: user,
+        contract: contract,
+        preheader: "Your refund of #{Overbooked.Contracts.format_price(contract.refund_amount_cents)} has been processed"
+      }
+    )
+  end
 end

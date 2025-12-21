@@ -87,6 +87,15 @@ defmodule OverbookedWeb.AdminContractsLive do
                 >
                   Details
                 </.button>
+                <%= if contract.status == :active and contract.stripe_payment_intent_id and is_nil(contract.refund_id) do %>
+                  <.button
+                    phx-click={show_modal("refund-contract-modal-#{contract.id}")}
+                    variant={:warning}
+                    size={:small}
+                  >
+                    Refund
+                  </.button>
+                <% end %>
                 <%= if contract.status == :active do %>
                   <.button
                     phx-click={show_modal("cancel-contract-modal-#{contract.id}")}
@@ -156,6 +165,34 @@ defmodule OverbookedWeb.AdminContractsLive do
         {:noreply,
          socket
          |> put_flash(:error, "Failed to cancel contract.")}
+    end
+  end
+
+  @impl true
+  def handle_event("refund_contract", %{"id" => id}, socket) do
+    contract = Contracts.get_contract!(id)
+
+    case Contracts.initiate_refund(contract) do
+      {:ok, _contract} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Refund initiated successfully. The customer will receive their refund within 5-10 business days.")
+         |> assign_contracts()}
+
+      {:error, :no_payment_intent} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Cannot refund: no payment information found for this contract.")}
+
+      {:error, message} when is_binary(message) ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to process refund: #{message}")}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to process refund. Please try again or process manually in Stripe.")}
     end
   end
 end

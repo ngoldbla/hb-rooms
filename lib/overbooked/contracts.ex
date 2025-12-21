@@ -185,6 +185,32 @@ defmodule Overbooked.Contracts do
   end
 
   @doc """
+  Gets the Stripe customer ID for a user from their most recent contract.
+  Returns nil if no customer ID is found.
+  """
+  def get_stripe_customer_id_for_user(%User{} = user) do
+    from(c in Contract,
+      where: c.user_id == ^user.id,
+      where: not is_nil(c.stripe_customer_id),
+      order_by: [desc: c.inserted_at],
+      limit: 1,
+      select: c.stripe_customer_id
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets a contract by its Stripe payment intent ID.
+  """
+  def get_contract_by_payment_intent(payment_intent_id) do
+    from(c in Contract,
+      where: c.stripe_payment_intent_id == ^payment_intent_id,
+      preload: [:resource, :user]
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Admin cancel - cancels a contract without user authorization check.
   """
   def admin_cancel_contract(%Contract{} = contract) do
@@ -270,4 +296,75 @@ defmodule Overbooked.Contracts do
   end
 
   def format_price(_), do: "$0.00"
+
+  @doc """
+  Initiates a refund for a contract through Stripe.
+  Amount can be nil for full refund or a specific amount in cents.
+  """
+  def initiate_refund(%Contract{} = contract, amount_cents \\ nil) do
+    unless contract.stripe_payment_intent_id do
+      {:error, :no_payment_intent}
+    else
+      case Overbooked.Stripe.create_refund(contract.stripe_payment_intent_id, amount_cents) do
+        {:ok, refund} ->
+          record_refund(contract, refund)
+
+        {:error, %Stripe.Error{message: message}} ->
+          {:error, message}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Records a refund on a contract (called by webhook or after initiate_refund).
+  """
+  def record_refund(%Contract{} = contract, refund) do
+    attrs = %{
+      refund_amount_cents: refund.amount,
+      refund_id: refund.id,
+      refunded_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    }
+
+    contract
+    |> Contract.refund_changeset(attrs)
+    |> Repo.update()
+    |> case do
+      {:ok, updated_contract} ->
+        send_refund_email(updated_contract)
+        {:ok, updated_contract}
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Records a refund on a contract by payment intent ID (used by webhook).
+  """
+  def record_refund_by_payment_intent(payment_intent_id, refund) do
+    case get_contract_by_payment_intent(payment_intent_id) do
+      nil ->
+        {:error, :contract_not_found}
+
+      contract ->
+        record_refund(contract, refund)
+    end
+  end
+
+  defp send_refund_email(contract) do
+    contract = Repo.preload(contract, [:user, :resource])
+
+    case Overbooked.Accounts.UserNotifier.deliver_refund_notification(contract.user, contract) do
+      {:ok, _email} ->
+        :ok
+
+      {:error, reason} ->
+        require Logger
+        Logger.error("Failed to send refund notification email: #{inspect(reason)}")
+        :error
+    end
+  end
 end
