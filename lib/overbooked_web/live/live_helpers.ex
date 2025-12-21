@@ -118,20 +118,22 @@ defmodule OverbookedWeb.LiveHelpers do
 
   # Mobile dropdown navigation with grouped sections - custom dropdown for consistent width
   # Uses explicit left/right positioning instead of w-full for iOS Safari compatibility
+  # iOS Safari fix: -webkit-appearance: none, calc() width, block container, viewport fallback
   defp admin_nav_mobile(assigns) do
     assigns = assign(assigns, :current_label, get_nav_label(assigns.active_tab))
 
     ~H"""
-    <div class="relative" style="width: 100%;">
-      <button
-        type="button"
-        id="admin-nav-mobile-btn"
-        phx-click={show_dropdown("#admin-nav-mobile-dropdown")}
-        class="flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-        style="width: 100%; min-width: 100%;"
-        aria-haspopup="listbox"
-        aria-expanded="false"
-      >
+    <div style="display: block; width: 100%;">
+      <div class="relative" style="width: 100%;">
+        <button
+          type="button"
+          id="admin-nav-mobile-btn"
+          phx-click={show_dropdown("#admin-nav-mobile-dropdown")}
+          class="flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          style="width: calc(100% - 0px); min-width: 100%; -webkit-appearance: none; appearance: none;"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+        >
         <span class="block truncate"><%= @current_label %></span>
         <svg class="h-5 w-5 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -199,6 +201,7 @@ defmodule OverbookedWeb.LiveHelpers do
           active={@active_tab == :admin_email_templates}
           label="Email Templates"
         />
+      </div>
       </div>
     </div>
     """
@@ -1028,7 +1031,7 @@ defmodule OverbookedWeb.LiveHelpers do
           <%= @label %>
         </h1>
       </div>
-      <div class="w-full sm:flex-1 mt-2 sm:mt-0">
+      <div class="w-full sm:flex-1 mt-2 sm:mt-0" style="display: block; width: 100%;">
         <%= render_slot(@inner_block) %>
       </div>
     </div>
