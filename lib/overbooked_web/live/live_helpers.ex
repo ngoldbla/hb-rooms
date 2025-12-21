@@ -116,62 +116,130 @@ defmodule OverbookedWeb.LiveHelpers do
     """
   end
 
-  # Mobile dropdown navigation with grouped sections
+  # Mobile dropdown navigation with grouped sections - custom dropdown for consistent width
   defp admin_nav_mobile(assigns) do
+    assigns = assign(assigns, :current_label, get_nav_label(assigns.active_tab))
+
     ~H"""
     <div class="relative w-full">
-      <select
-        onchange="window.location.href = this.value"
-        class="block w-full min-w-full py-3 px-4 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white shadow-sm"
+      <button
+        type="button"
+        id="admin-nav-mobile-btn"
+        phx-click={show_dropdown("#admin-nav-mobile-dropdown")}
+        class="w-full flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        aria-haspopup="listbox"
+        aria-expanded="false"
       >
-        <optgroup label="People">
-          <option value={Routes.admin_users_path(@socket, :index)} selected={@active_tab == :admin_users}>
-            Users
-          </option>
-          <option
-            value={Routes.admin_contracts_path(@socket, :index)}
-            selected={@active_tab == :admin_contracts}
-          >
-            Contracts
-          </option>
-        </optgroup>
-        <optgroup label="Spaces">
-          <option value={Routes.admin_rooms_path(@socket, :index)} selected={@active_tab == :admin_rooms}>
-            Rooms
-          </option>
-          <option value={Routes.admin_desks_path(@socket, :index)} selected={@active_tab == :admin_desks}>
-            Desks
-          </option>
-          <option
-            value={Routes.admin_amenities_path(@socket, :index)}
-            selected={@active_tab == :admin_amenities}
-          >
-            Amenities
-          </option>
-          <option
-            value={Routes.admin_spaces_path(@socket, :index)}
-            selected={@active_tab == :admin_spaces}
-          >
-            Office Spaces
-          </option>
-        </optgroup>
-        <optgroup label="Configuration">
-          <option
-            value={Routes.admin_settings_path(@socket, :index)}
-            selected={@active_tab == :admin_settings}
-          >
-            Settings
-          </option>
-          <option
-            value={Routes.admin_email_templates_path(@socket, :index)}
-            selected={@active_tab == :admin_email_templates}
-          >
-            Email Templates
-          </option>
-        </optgroup>
-      </select>
+        <span class="block truncate"><%= @current_label %></span>
+        <svg class="h-5 w-5 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+
+      <div
+        id="admin-nav-mobile-dropdown"
+        phx-click-away={hide_dropdown("#admin-nav-mobile-dropdown")}
+        class="hidden absolute z-20 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 py-1 max-h-80 overflow-auto"
+        role="listbox"
+        tabindex="-1"
+      >
+        <!-- People Group -->
+        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
+          People
+        </div>
+        <.mobile_nav_option
+          path={Routes.admin_users_path(@socket, :index)}
+          active={@active_tab == :admin_users}
+          label="Users"
+        />
+        <.mobile_nav_option
+          path={Routes.admin_contracts_path(@socket, :index)}
+          active={@active_tab == :admin_contracts}
+          label="Contracts"
+        />
+
+        <!-- Spaces Group -->
+        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-t border-gray-100">
+          Spaces
+        </div>
+        <.mobile_nav_option
+          path={Routes.admin_rooms_path(@socket, :index)}
+          active={@active_tab == :admin_rooms}
+          label="Rooms"
+        />
+        <.mobile_nav_option
+          path={Routes.admin_desks_path(@socket, :index)}
+          active={@active_tab == :admin_desks}
+          label="Desks"
+        />
+        <.mobile_nav_option
+          path={Routes.admin_amenities_path(@socket, :index)}
+          active={@active_tab == :admin_amenities}
+          label="Amenities"
+        />
+        <.mobile_nav_option
+          path={Routes.admin_spaces_path(@socket, :index)}
+          active={@active_tab == :admin_spaces}
+          label="Office Spaces"
+        />
+
+        <!-- Configuration Group -->
+        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-t border-gray-100">
+          Configuration
+        </div>
+        <.mobile_nav_option
+          path={Routes.admin_settings_path(@socket, :index)}
+          active={@active_tab == :admin_settings}
+          label="Settings"
+        />
+        <.mobile_nav_option
+          path={Routes.admin_email_templates_path(@socket, :index)}
+          active={@active_tab == :admin_email_templates}
+          label="Email Templates"
+        />
+      </div>
     </div>
     """
+  end
+
+  # Helper component for mobile nav options
+  attr :path, :string, required: true
+  attr :active, :boolean, required: true
+  attr :label, :string, required: true
+
+  defp mobile_nav_option(assigns) do
+    ~H"""
+    <.link
+      navigate={@path}
+      role="option"
+      aria-selected={@active}
+      class={"flex items-center px-3 py-3 text-sm cursor-pointer min-h-[44px] #{if @active, do: "bg-primary-50 text-primary-700", else: "text-gray-700 hover:bg-gray-50"}"}
+    >
+      <%= if @active do %>
+        <svg class="h-5 w-5 text-primary-600 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+      <% else %>
+        <span class="w-5 mr-2 flex-shrink-0"></span>
+      <% end %>
+      <span class="truncate"><%= @label %></span>
+    </.link>
+    """
+  end
+
+  # Get display label for nav tab
+  defp get_nav_label(tab) do
+    case tab do
+      :admin_users -> "Users"
+      :admin_contracts -> "Contracts"
+      :admin_rooms -> "Rooms"
+      :admin_desks -> "Desks"
+      :admin_amenities -> "Amenities"
+      :admin_spaces -> "Office Spaces"
+      :admin_settings -> "Settings"
+      :admin_email_templates -> "Email Templates"
+      _ -> "Admin"
+    end
   end
 
   # Tablet vertical sidebar navigation
