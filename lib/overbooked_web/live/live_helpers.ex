@@ -118,7 +118,7 @@ defmodule OverbookedWeb.LiveHelpers do
 
   # Mobile navigation using horizontal scrollable chips
   # Avoids iOS Safari dropdown issues by using simple inline chips
-  # Consolidated: Users, Resources (Rooms+Desks+Amenities), Rentals (Spaces+Contracts), Settings
+  # Consolidated: Users, Resources (Rooms+Desks+Amenities), Rentals (Spaces+Contracts), Analytics, Settings
   defp admin_nav_mobile(assigns) do
     ~H"""
     <div class="w-full overflow-x-auto pb-2 -mx-1">
@@ -140,6 +140,12 @@ defmodule OverbookedWeb.LiveHelpers do
           active={@active_tab in [:admin_spaces, :admin_contracts]}
           label="Rentals"
           icon={:office_building}
+        />
+        <.nav_chip
+          path={Routes.admin_analytics_path(@socket, :index)}
+          active={@active_tab == :admin_analytics}
+          label="Analytics"
+          icon={:chart_bar}
         />
         <.nav_chip
           path={Routes.admin_settings_path(@socket, :index)}
@@ -202,6 +208,7 @@ defmodule OverbookedWeb.LiveHelpers do
       :admin_amenities -> :resources
       :admin_spaces -> :rentals
       :admin_contracts -> :rentals
+      :admin_analytics -> :analytics
       :admin_settings -> :settings
       :admin_email_templates -> :settings
       _ -> :unknown
@@ -226,6 +233,9 @@ defmodule OverbookedWeb.LiveHelpers do
         path={Routes.admin_spaces_path(@socket, :index)}
       >
         <.icon name={:office_building} class="w-4 h-4 mr-2" /> Rentals
+      </.nav_link>
+      <.nav_link active={@active_tab == :admin_analytics} path={Routes.admin_analytics_path(@socket, :index)}>
+        <.icon name={:chart_bar} class="w-4 h-4 mr-2" /> Analytics
       </.nav_link>
       <.nav_link
         active={@active_tab in [:admin_settings, :admin_email_templates]}
@@ -255,6 +265,9 @@ defmodule OverbookedWeb.LiveHelpers do
         path={Routes.admin_spaces_path(@socket, :index)}
       >
         <.icon name={:office_building} class="w-4 h-4 mr-1.5" /> Rentals
+      </.desktop_tab>
+      <.desktop_tab active={@active_tab == :admin_analytics} path={Routes.admin_analytics_path(@socket, :index)}>
+        <.icon name={:chart_bar} class="w-4 h-4 mr-1.5" /> Analytics
       </.desktop_tab>
       <.desktop_tab
         active={@active_tab in [:admin_settings, :admin_email_templates]}
