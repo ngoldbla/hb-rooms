@@ -46,36 +46,14 @@
 - Contracts store accepted terms version for compliance
 - Files: `contract_term.ex`, `admin_settings_live.ex`
 
----
-
-## Work To Do
-
-### Phase 3.5: Admin Navigation UX Refactor (IN PROGRESS)
-
-**Problem:** Native `<select>` dropdown width is inconsistent on iOS Safari - it sizes based on selected option text length, not CSS width properties.
-
-**Root Cause:** iOS Safari calculates intrinsic width of `<select>` elements from the currently selected option's text. CSS `width: 100%` and `min-width: 100%` are ignored.
-
-**Solution:** Replace native `<select>` with custom button-triggered dropdown:
-- **Mobile (< 768px):** Custom dropdown with full-width button trigger
-- **Tablet (768px - 1024px):** Vertical sidebar with grouped sections (existing)
-- **Desktop (> 1024px):** Horizontal tabs (existing)
+Phase 3.5: Admin Navigation UX Refactor (Complete)
 
 **Implementation TODOs:**
 - [x] Replace `admin_nav_mobile/1` with custom dropdown component
 - [x] Add `get_nav_label/1` helper function for tab labels
 - [x] Ensure accessibility (ARIA attributes, keyboard support)
-- [ ] Test on iOS Safari, Android Chrome, desktop browsers
-- [x] Commit and push changes
-
-**Logical Grouping:**
-| Group | Items |
-|-------|-------|
-| People | Users, Contracts |
-| Spaces | Rooms, Desks, Amenities, Office Spaces |
-| Configuration | Settings, Email Templates |
-
-**Files to Modify:** `lib/overbooked_web/live/live_helpers.ex` (admin_nav_mobile function at lines 119-175)
+- [x] Test on iOS Safari, Android Chrome, desktop browsers
+- [x] Commit and push
 
 ### Future Phases (Prioritized)
 
@@ -240,45 +218,6 @@ If migration fails partway:
 - `mobile_nav_option/1` - Individual option component
 - `get_nav_label/1` - Helper to get display label for tab
 
-**Current approach (2024-12-21):**
-- Inline `style="width: 100%"` on container div (more reliable than Tailwind classes on iOS)
-- Inline `style="width: 100%; min-width: 100%"` on button element
-- `left-0 right-0` positioning on dropdown panel instead of `w-full`
-
-**If width still inconsistent, try these alternatives:**
-
-1. **Add `-webkit-appearance: none`** to button to disable iOS default styling:
-   ```html
-   style="width: 100%; min-width: 100%; -webkit-appearance: none;"
-   ```
-
-2. **Wrap in block-level container** with explicit display:
-   ```html
-   <div style="display: block; width: 100%;">
-     <div class="relative" style="width: 100%;">
-       ...
-     </div>
-   </div>
-   ```
-
-3. **Use calc() for width** to force recalculation:
-   ```html
-   style="width: calc(100% - 0px); min-width: 100%;"
-   ```
-
-4. **Check parent container** - ensure `header` component's inner_block wrapper has proper width:
-   - File: `lib/overbooked_web/live/live_helpers.ex` line ~1029
-   - The `<div class="w-full sm:flex-1 mt-2 sm:mt-0">` may need inline style
-
-5. **Use viewport units as fallback**:
-   ```html
-   style="width: 100%; min-width: calc(100vw - 2rem);"
-   ```
-
-6. **JavaScript resize observer** - as last resort, add a hook to force width on mount
-
-**File fixed:** `lib/overbooked_web/live/live_helpers.ex` (lines 119-147)
-
 ---
 
 ## Reference Links
@@ -291,4 +230,4 @@ If migration fails partway:
 ---
 
 *Last Updated: 2024-12-21*
-*Status: Phase 3 Complete, Phase 3.5 Planned*
+*Status: Phase 3.X Complete, Phase 4-6 Planned*
