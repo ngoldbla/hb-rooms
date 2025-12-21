@@ -214,6 +214,22 @@ If migration fails partway:
 2. Remove from `schema_migrations`: `DELETE FROM schema_migrations WHERE version = 'YYYYMMDDHHMMSS';`
 3. Rerun: `mix ecto.migrate`
 
+### iOS Safari Select Element Width (Fixed 2024-12-21)
+
+**Issue:** Native `<select>` elements shrink to fit the selected option text on iOS Safari, even with `width: 100%`.
+
+**Cause:** iOS Safari calculates intrinsic width based on the selected option's text length, which can override CSS `width` properties.
+
+**Fix:** Use both `w-full` and `min-w-full` on the select element:
+```html
+<!-- w-full alone is not sufficient on iOS Safari -->
+<select class="block w-full min-w-full ...">
+```
+
+Also ensure all parent container divs have explicit `w-full` to guarantee width inheritance through the DOM hierarchy.
+
+**File fixed:** `lib/overbooked_web/live/live_helpers.ex` (admin_tabs and admin_nav_mobile)
+
 ---
 
 ## Reference Links
