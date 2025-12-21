@@ -55,21 +55,37 @@ Phase 3.5: Admin Navigation UX Refactor (Complete)
 - [x] Test on iOS Safari, Android Chrome, desktop browsers
 - [x] Commit and push
 
+### Phase 4: Email Notifications + Analytics (DONE)
+
+**4.1 Email Notifications (Oban + Background Jobs)**
+- Oban 2.17 for job queue and cron scheduling
+- Booking reminder emails (24h before booking start)
+- Contract expiration warnings (7 days before expiry)
+- Notification sweeper cron job (runs every 15 minutes)
+- Two new email template types with admin customization
+- Idempotency tracking via timestamps
+- Files: `workers/`, `analytics.ex`, `admin_analytics_live.ex`
+
+**4.2 Analytics Dashboard**
+- Revenue tracking (monthly, by resource, trends)
+- Space utilization metrics (per resource and overall)
+- Chart.js integration with LiveView hooks
+- Date range filters (Today, 7/30/90 days, Custom)
+- KPI cards with real-time data
+- URL-shareable analytics with query params
+- Files: `analytics.ex`, `admin_analytics_live.ex`, `assets/js/hooks/charts.js`
+
 ### Future Phases (Prioritized)
 
-**Phase 4 - High Priority:**
-1. Email Notifications (booking reminders, contract expiration warnings)
-2. Analytics Dashboard (revenue tracking, space utilization)
-
 **Phase 5 - Medium Priority:**
-3. Recurring Bookings (weekly/daily patterns)
-4. Availability Search (by date, amenities, capacity)
+1. Recurring Bookings (weekly/daily patterns)
+2. Availability Search (by date, amenities, capacity)
 
 **Phase 6 - Lower Priority:**
-5. Google Calendar Sync
-6. Resource Images
-7. Discount Codes
-8. CSV Import/Export
+3. Google Calendar Sync
+4. Resource Images
+5. Discount Codes
+6. CSV Import/Export
 
 ---
 
@@ -83,12 +99,19 @@ lib/
 │   ├── resources/                 # Rooms, desks, amenities
 │   ├── contracts/                 # Long-term space rentals
 │   ├── settings/                  # App configuration
+│   ├── workers/                   # Oban background jobs
+│   │   ├── booking_reminder_worker.ex
+│   │   ├── contract_expiration_worker.ex
+│   │   └── notification_sweeper.ex
+│   ├── analytics.ex               # Revenue & utilization queries
 │   ├── stripe.ex                  # Stripe API integration
 │   └── email_renderer.ex          # Template variable substitution
 │
 └── overbooked_web/                # Web layer
     ├── live/                      # LiveView modules
     │   ├── admin/                 # Admin-only pages
+    │   │   ├── admin_analytics_live.ex
+    │   │   └── ...
     │   ├── scheduler/             # Calendar views
     │   └── user/                  # Auth pages
     ├── controllers/
@@ -218,6 +241,28 @@ If migration fails partway:
 - `mobile_nav_option/1` - Individual option component
 - `get_nav_label/1` - Helper to get display label for tab
 
+### Oban/Ecto Dependency Compatibility (Fixed 2024-12-21)
+
+**Issue:** Railway deployment failed during `mix deps.compile` with:
+```
+** (FunctionClauseError) no function clause matching in Ecto.Query.with_cte/3
+    (ecto 3.9.1) expanding macro: Ecto.Query.with_cte/3
+    lib/oban/engines/basic.ex:107
+```
+
+**Cause:** Oban 2.17.4 (added for Phase 4 background jobs) requires **Ecto 3.10+** because it uses `Ecto.Query.with_cte/3` which was introduced in Ecto 3.10. The project had `{:ecto_sql, "~> 3.6"}` which resolved to Ecto 3.9.1.
+
+**Fix:** Update `mix.exs` dependency:
+```elixir
+# Changed from:
+{:ecto_sql, "~> 3.6"}
+
+# To:
+{:ecto_sql, "~> 3.10"}
+```
+
+**Impact:** Ecto 3.10 is backward compatible with Phoenix 1.6.6 and all existing code.
+
 ---
 
 ## Reference Links
@@ -230,4 +275,4 @@ If migration fails partway:
 ---
 
 *Last Updated: 2024-12-21*
-*Status: Phase 3.X Complete, Phase 4-6 Planned*
+*Status: Phase 4 Complete (Email Notifications + Analytics Dashboard), Phase 5-6 Planned*
