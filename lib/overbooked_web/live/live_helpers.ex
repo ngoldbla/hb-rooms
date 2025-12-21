@@ -117,16 +117,18 @@ defmodule OverbookedWeb.LiveHelpers do
   end
 
   # Mobile dropdown navigation with grouped sections - custom dropdown for consistent width
+  # Uses explicit left/right positioning instead of w-full for iOS Safari compatibility
   defp admin_nav_mobile(assigns) do
     assigns = assign(assigns, :current_label, get_nav_label(assigns.active_tab))
 
     ~H"""
-    <div class="relative w-full">
+    <div class="relative" style="width: 100%;">
       <button
         type="button"
         id="admin-nav-mobile-btn"
         phx-click={show_dropdown("#admin-nav-mobile-dropdown")}
-        class="w-full flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        class="flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        style="width: 100%; min-width: 100%;"
         aria-haspopup="listbox"
         aria-expanded="false"
       >
@@ -139,7 +141,7 @@ defmodule OverbookedWeb.LiveHelpers do
       <div
         id="admin-nav-mobile-dropdown"
         phx-click-away={hide_dropdown("#admin-nav-mobile-dropdown")}
-        class="hidden absolute z-20 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 py-1 max-h-80 overflow-auto"
+        class="hidden absolute z-20 mt-1 left-0 right-0 bg-white shadow-lg rounded-md border border-gray-200 py-1 max-h-80 overflow-auto"
         role="listbox"
         tabindex="-1"
       >
