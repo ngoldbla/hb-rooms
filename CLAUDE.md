@@ -50,14 +50,23 @@
 
 ## Work To Do
 
-### Phase 3.5: Admin Navigation UX Refactor (PLANNED)
+### Phase 3.5: Admin Navigation UX Refactor (IN PROGRESS)
 
-**Problem:** Current admin navigation uses horizontal tabs that require horizontal scrolling on mobile.
+**Problem:** Native `<select>` dropdown width is inconsistent on iOS Safari - it sizes based on selected option text length, not CSS width properties.
 
-**Solution:** Responsive navigation with three breakpoints:
-- **Mobile (< 768px):** Grouped dropdown with `<optgroup>` labels
-- **Tablet (768px - 1024px):** Vertical sidebar with grouped sections
-- **Desktop (> 1024px):** Enhanced horizontal tabs
+**Root Cause:** iOS Safari calculates intrinsic width of `<select>` elements from the currently selected option's text. CSS `width: 100%` and `min-width: 100%` are ignored.
+
+**Solution:** Replace native `<select>` with custom button-triggered dropdown:
+- **Mobile (< 768px):** Custom dropdown with full-width button trigger
+- **Tablet (768px - 1024px):** Vertical sidebar with grouped sections (existing)
+- **Desktop (> 1024px):** Horizontal tabs (existing)
+
+**Implementation TODOs:**
+- [x] Replace `admin_nav_mobile/1` with custom dropdown component
+- [x] Add `get_nav_label/1` helper function for tab labels
+- [x] Ensure accessibility (ARIA attributes, keyboard support)
+- [ ] Test on iOS Safari, Android Chrome, desktop browsers
+- [x] Commit and push changes
 
 **Logical Grouping:**
 | Group | Items |
@@ -66,7 +75,7 @@
 | Spaces | Rooms, Desks, Amenities, Office Spaces |
 | Configuration | Settings, Email Templates |
 
-**Files to Modify:** `lib/overbooked_web/live/live_helpers.ex` (tabs component at line 753-767)
+**Files to Modify:** `lib/overbooked_web/live/live_helpers.ex` (admin_nav_mobile function at lines 119-175)
 
 ### Future Phases (Prioritized)
 
@@ -218,17 +227,20 @@ If migration fails partway:
 
 **Issue:** Native `<select>` elements shrink to fit the selected option text on iOS Safari, even with `width: 100%`.
 
-**Cause:** iOS Safari calculates intrinsic width based on the selected option's text length, which can override CSS `width` properties.
+**Cause:** iOS Safari calculates intrinsic width based on the selected option's text length. CSS `width` and `min-width` properties cannot reliably override this browser behavior.
 
-**Fix:** Use both `w-full` and `min-w-full` on the select element:
-```html
-<!-- w-full alone is not sufficient on iOS Safari -->
-<select class="block w-full min-w-full ...">
-```
+**Fix:** Replace native `<select>` with a custom button-triggered dropdown:
+- Use a `<button>` element as the trigger (respects CSS width)
+- Display dropdown panel with grouped options
+- Current selection shown with checkmark indicator
+- Proper ARIA attributes for accessibility
 
-Also ensure all parent container divs have explicit `w-full` to guarantee width inheritance through the DOM hierarchy.
+**Implementation details:**
+- `admin_nav_mobile/1` - Custom dropdown component
+- `mobile_nav_option/1` - Individual option component
+- `get_nav_label/1` - Helper to get display label for tab
 
-**File fixed:** `lib/overbooked_web/live/live_helpers.ex` (admin_tabs and admin_nav_mobile)
+**File fixed:** `lib/overbooked_web/live/live_helpers.ex` (lines 119-243)
 
 ---
 
