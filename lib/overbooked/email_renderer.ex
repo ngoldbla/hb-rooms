@@ -64,6 +64,29 @@ defmodule Overbooked.EmailRenderer do
           }
         })
 
+      "booking_reminder" ->
+        Map.merge(base_assigns, %{
+          booking: %{
+            resource: %{
+              name: "Meeting Room A"
+            },
+            date: "January 15, 2025",
+            start_time: "10:00 AM",
+            end_time: "11:30 AM"
+          }
+        })
+
+      "contract_expiration_warning" ->
+        Map.merge(base_assigns, %{
+          contract: %{
+            resource: %{
+              name: "Corner Office Suite A"
+            },
+            end_date: "January 15, 2025",
+            days_remaining: "7"
+          }
+        })
+
       _ ->
         base_assigns
     end

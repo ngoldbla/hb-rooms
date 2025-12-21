@@ -13,6 +13,8 @@ defmodule Overbooked.Settings.DefaultTemplates do
   def default_subject("contract_confirmation"), do: "Your contract is confirmed"
   def default_subject("contract_cancelled"), do: "Contract cancelled"
   def default_subject("refund_notification"), do: "Refund processed for your contract"
+  def default_subject("booking_reminder"), do: "Reminder: Your booking is tomorrow"
+  def default_subject("contract_expiration_warning"), do: "Your contract expires soon"
   def default_subject(_), do: "Hatchbridge Rooms Notification"
 
   @doc """
@@ -271,6 +273,97 @@ defmodule Overbooked.Settings.DefaultTemplates do
     """
   end
 
+  def default_html_body("booking_reminder") do
+    """
+    <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 24px; color: #111827;">
+      Booking Reminder
+    </h1>
+
+    <p style="margin: 0 0 16px; color: #374151; font-size: 16px; line-height: 24px;">
+      Hi {{user.name}},
+    </p>
+
+    <p style="margin: 0 0 24px; color: #374151; font-size: 16px; line-height: 24px;">
+      This is a friendly reminder that you have a booking coming up tomorrow.
+    </p>
+
+    <table style="width: 100%; background-color: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9; margin-bottom: 24px;">
+      <tr>
+        <td style="padding: 24px;">
+          <p style="margin: 0 0 16px; font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">
+            Resource
+          </p>
+          <p style="margin: 0 0 16px; font-size: 18px; color: #111827; font-weight: 600;">
+            {{booking.resource.name}}
+          </p>
+
+          <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">
+            Date
+          </p>
+          <p style="margin: 0 0 16px; font-size: 16px; color: #111827;">
+            {{booking.date}}
+          </p>
+
+          <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">
+            Time
+          </p>
+          <p style="margin: 0; font-size: 16px; color: #111827;">
+            {{booking.start_time}} - {{booking.end_time}}
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0; color: #374151; font-size: 16px; line-height: 24px;">
+      We look forward to seeing you!
+    </p>
+    """
+  end
+
+  def default_html_body("contract_expiration_warning") do
+    """
+    <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 24px; color: #111827;">
+      Contract Expiring Soon
+    </h1>
+
+    <p style="margin: 0 0 16px; color: #374151; font-size: 16px; line-height: 24px;">
+      Hi {{user.name}},
+    </p>
+
+    <p style="margin: 0 0 24px; color: #374151; font-size: 16px; line-height: 24px;">
+      Your office space contract is expiring in {{contract.days_remaining}} days. Here are the details:
+    </p>
+
+    <table style="width: 100%; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 24px;">
+      <tr>
+        <td style="padding: 24px;">
+          <p style="margin: 0 0 16px; font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">
+            Space
+          </p>
+          <p style="margin: 0 0 16px; font-size: 18px; color: #111827; font-weight: 600;">
+            {{contract.resource.name}}
+          </p>
+
+          <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">
+            Expires On
+          </p>
+          <p style="margin: 0; font-size: 16px; color: #111827;">
+            {{contract.end_date}}
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 24px; color: #374151; font-size: 16px; line-height: 24px;">
+      If you'd like to renew your contract or explore other available spaces, please visit our office spaces page or contact us.
+    </p>
+
+    <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 20px;">
+      Thank you for being a valued member of our community.
+    </p>
+    """
+  end
+
   def default_html_body(_), do: "<p>Email content</p>"
 
   @doc """
@@ -400,6 +493,52 @@ defmodule Overbooked.Settings.DefaultTemplates do
     The refund has been initiated and should appear in your original payment method within 5-10 business days, depending on your bank or card issuer.
 
     If you have any questions about this refund or would like to rent another space, please don't hesitate to reach out.
+    """
+  end
+
+  def default_text_body("booking_reminder") do
+    """
+    Booking Reminder
+
+    Hi {{user.name}},
+
+    This is a friendly reminder that you have a booking coming up tomorrow.
+
+    BOOKING DETAILS
+    ===============
+
+    Resource: {{booking.resource.name}}
+
+    Date: {{booking.date}}
+
+    Time: {{booking.start_time}} - {{booking.end_time}}
+
+    ===============
+
+    We look forward to seeing you!
+    """
+  end
+
+  def default_text_body("contract_expiration_warning") do
+    """
+    Contract Expiring Soon
+
+    Hi {{user.name}},
+
+    Your office space contract is expiring in {{contract.days_remaining}} days.
+
+    CONTRACT DETAILS
+    ================
+
+    Space: {{contract.resource.name}}
+
+    Expires On: {{contract.end_date}}
+
+    ================
+
+    If you'd like to renew your contract or explore other available spaces, please visit our office spaces page or contact us.
+
+    Thank you for being a valued member of our community.
     """
   end
 

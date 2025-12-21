@@ -6,7 +6,7 @@ defmodule Overbooked.Settings.EmailTemplate do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @template_types ~w(welcome password_reset update_email contract_confirmation contract_cancelled refund_notification)
+  @template_types ~w(welcome password_reset update_email contract_confirmation contract_cancelled refund_notification booking_reminder contract_expiration_warning)
 
   schema "email_templates" do
     field :template_type, :string
@@ -42,6 +42,8 @@ defmodule Overbooked.Settings.EmailTemplate do
   def humanize_type("contract_confirmation"), do: "Contract Confirmation"
   def humanize_type("contract_cancelled"), do: "Contract Cancelled"
   def humanize_type("refund_notification"), do: "Refund Notification"
+  def humanize_type("booking_reminder"), do: "Booking Reminder"
+  def humanize_type("contract_expiration_warning"), do: "Contract Expiration Warning"
   def humanize_type(type), do: type |> String.replace("_", " ") |> String.capitalize()
 
   @doc """
@@ -84,6 +86,27 @@ defmodule Overbooked.Settings.EmailTemplate do
     ]
   end
 
+  def available_variables("booking_reminder") do
+    [
+      "user.name",
+      "user.email",
+      "booking.resource.name",
+      "booking.date",
+      "booking.start_time",
+      "booking.end_time"
+    ]
+  end
+
+  def available_variables("contract_expiration_warning") do
+    [
+      "user.name",
+      "user.email",
+      "contract.resource.name",
+      "contract.end_date",
+      "contract.days_remaining"
+    ]
+  end
+
   def available_variables(_), do: []
 
   @doc """
@@ -95,5 +118,7 @@ defmodule Overbooked.Settings.EmailTemplate do
   def description("contract_confirmation"), do: "Sent when a contract payment is completed"
   def description("contract_cancelled"), do: "Sent when a contract is cancelled"
   def description("refund_notification"), do: "Sent when a refund is processed"
+  def description("booking_reminder"), do: "Sent 24 hours before a booking starts"
+  def description("contract_expiration_warning"), do: "Sent 7 days before a contract expires"
   def description(_), do: ""
 end

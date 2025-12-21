@@ -66,6 +66,18 @@ config :stripity_stripe,
 config :overbooked,
   stripe_webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET")
 
+# Oban job processing configuration
+config :overbooked, Oban,
+  repo: Overbooked.Repo,
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: [
+       # Run notification sweeper every 15 minutes
+       {"*/15 * * * *", Overbooked.Workers.NotificationSweeper}
+     ]}
+  ],
+  queues: [default: 10, notifications: 5]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
