@@ -100,17 +100,17 @@ defmodule OverbookedWeb.LiveHelpers do
   def admin_tabs(assigns) do
     ~H"""
     <!-- Mobile: Dropdown -->
-    <div class="block md:hidden">
+    <div class="block md:hidden w-full">
       <.admin_nav_mobile active_tab={@active_tab} socket={@socket} />
     </div>
 
     <!-- Tablet: Vertical Sidebar -->
-    <div class="hidden md:block lg:hidden">
+    <div class="hidden md:block lg:hidden w-full">
       <.admin_nav_tablet active_tab={@active_tab} socket={@socket} />
     </div>
 
     <!-- Desktop: Horizontal Tabs with Grouping -->
-    <div class="hidden lg:block">
+    <div class="hidden lg:block w-full">
       <.admin_nav_desktop active_tab={@active_tab} socket={@socket} />
     </div>
     """
@@ -122,7 +122,7 @@ defmodule OverbookedWeb.LiveHelpers do
     <div class="relative w-full">
       <select
         onchange="window.location.href = this.value"
-        class="block w-full py-3 px-4 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white shadow-sm"
+        class="block w-full min-w-full py-3 px-4 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white shadow-sm"
       >
         <optgroup label="People">
           <option value={Routes.admin_users_path(@socket, :index)} selected={@active_tab == :admin_users}>
