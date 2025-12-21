@@ -21,7 +21,7 @@
 | Contract Emails | ✅ Done | `templates/email/contract_*.html.heex` |
 | Customer Portal | ✅ Done | `billing_controller.ex` |
 | Refund Handling | ✅ Done | `stripe.ex`, `contracts.ex` |
-| **Email Template Editor** | 📋 Next | Phase 3.1 below |
+| **Email Template Editor** | ✅ Done | `admin_email_templates_live.ex`, `email_template.ex` |
 | **Contract Terms Editor** | 📋 Next | Phase 3.2 below |
 
 ## Brand Assets
@@ -38,7 +38,9 @@
 
 ---
 
-## 3.1 Email Template Editor
+## 3.1 Email Template Editor ✅
+
+**Status: Completed**
 
 Admin UI to customize all 6 email types with rich text editing, variable preview, and reset to default.
 
