@@ -47,6 +47,13 @@ defmodule OverbookedWeb.StripeWebhookController do
       stripe_customer_id: session.customer
     }
 
+    # Add accepted terms version if present in metadata
+    attrs =
+      case metadata["accepted_terms_version"] do
+        nil -> attrs
+        version -> Map.put(attrs, :accepted_terms_version, String.to_integer(version))
+      end
+
     case Contracts.create_and_activate_contract(attrs) do
       {:ok, contract} ->
         Logger.info("Contract #{contract.id} activated successfully")

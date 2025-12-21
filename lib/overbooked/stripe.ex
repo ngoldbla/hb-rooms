@@ -21,12 +21,13 @@ defmodule Overbooked.Stripe do
     - user: The user making the purchase
     - success_url: URL to redirect to on successful payment
     - cancel_url: URL to redirect to if payment is cancelled
+    - accepted_terms_version: The version of contract terms the user accepted
 
   ## Returns
     - `{:ok, session}` on success with the Stripe session
     - `{:error, reason}` on failure
   """
-  def create_checkout_session(%Resource{} = resource, duration_months, %User{} = user, success_url, cancel_url) do
+  def create_checkout_session(%Resource{} = resource, duration_months, %User{} = user, success_url, cancel_url, accepted_terms_version \\ nil) do
     config = Settings.get_stripe_config()
 
     unless config.secret_key do
@@ -41,6 +42,21 @@ defmodule Overbooked.Stripe do
 
       line_item_description =
         "Office space rental from #{format_date(start_date)} to #{format_date(end_date)}"
+
+      metadata = %{
+        resource_id: to_string(resource.id),
+        user_id: to_string(user.id),
+        duration_months: to_string(duration_months),
+        monthly_rate_cents: to_string(monthly_rate)
+      }
+
+      # Add accepted terms version to metadata if provided
+      metadata =
+        if accepted_terms_version do
+          Map.put(metadata, :accepted_terms_version, to_string(accepted_terms_version))
+        else
+          metadata
+        end
 
       params = %{
         mode: "payment",
@@ -58,12 +74,7 @@ defmodule Overbooked.Stripe do
             quantity: 1
           }
         ],
-        metadata: %{
-          resource_id: to_string(resource.id),
-          user_id: to_string(user.id),
-          duration_months: to_string(duration_months),
-          monthly_rate_cents: to_string(monthly_rate)
-        },
+        metadata: metadata,
         success_url: success_url,
         cancel_url: cancel_url
       }

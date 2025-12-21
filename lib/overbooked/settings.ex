@@ -9,6 +9,7 @@ defmodule Overbooked.Settings do
   alias Overbooked.Settings.StripeSetting
   alias Overbooked.Settings.EmailTemplate
   alias Overbooked.Settings.DefaultTemplates
+  alias Overbooked.Settings.ContractTerm
 
   @doc """
   Gets the mail setting singleton, creating a default one if it doesn't exist.
@@ -360,5 +361,72 @@ defmodule Overbooked.Settings do
       variables: EmailTemplate.available_variables(template_type),
       is_custom: false
     }
+  end
+
+  # =============================================================================
+  # Contract Terms
+  # =============================================================================
+
+  @doc """
+  Gets the current active contract terms.
+  Creates default terms if none exist.
+  """
+  def get_current_terms do
+    case Repo.one(from t in ContractTerm, where: t.is_active == true, order_by: [desc: t.version], limit: 1) do
+      nil ->
+        # Create default terms
+        %ContractTerm{}
+        |> ContractTerm.changeset(%{
+          content: ContractTerm.default_content(),
+          version: 1,
+          effective_date: Date.utc_today(),
+          is_active: true
+        })
+        |> Repo.insert!()
+
+      terms ->
+        terms
+    end
+  end
+
+  @doc """
+  Gets contract terms by version number.
+  """
+  def get_terms_by_version(version) do
+    Repo.get_by(ContractTerm, version: version)
+  end
+
+  @doc """
+  Updates the contract terms.
+  If content changes, creates a new version automatically.
+  """
+  def update_terms(attrs) do
+    current_terms = get_current_terms()
+
+    current_terms
+    |> ContractTerm.update_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Lists all contract terms versions.
+  """
+  def list_terms_versions do
+    Repo.all(from t in ContractTerm, order_by: [desc: t.version])
+  end
+
+  @doc """
+  Returns a changeset for tracking contract terms changes.
+  """
+  def change_contract_terms(%ContractTerm{} = terms, attrs \\ %{}) do
+    ContractTerm.changeset(terms, attrs)
+  end
+
+  @doc """
+  Resets contract terms to default content.
+  Creates a new version with default content.
+  """
+  def reset_terms_to_default do
+    update_terms(%{"content" => ContractTerm.default_content()})
   end
 end
