@@ -484,7 +484,7 @@ CREATE UNIQUE INDEX mail_settings_singleton ON mail_settings (id) WHERE id IS NO
 
 ## Admin Spaces
 - [x] Navigation works (nav.ex + layout.heex fixed)
-- [x] Page loads without error (fixed query composition bug in list_resources_with_status)
+- [x] Page loads without error (fixed form field name conflict - see Bug Fixes below)
 - [ ] Can create new rentable space with pricing
 - [ ] Can edit existing space
 - [ ] Can toggle is_rentable
@@ -499,6 +499,26 @@ CREATE UNIQUE INDEX mail_settings_singleton ON mail_settings (id) WHERE id IS NO
 
 ---
 
+# Bug Fixes
+
+## Admin Spaces Form Field Conflict (2024-12-21)
+
+**Problem:** Visiting `/admin/spaces` caused an internal server error:
+```
+Protocol.UndefinedError: protocol Phoenix.HTML.Safe not implemented for
+#Ecto.Association.NotLoaded<association :resource_type is not loaded>
+```
+
+**Root Cause:** The form used `:resource_type` as the select field name, which conflicts with the `belongs_to :resource_type` Ecto association on the Resource schema. When Phoenix tried to get the current value for the select, it accessed the unloaded association struct.
+
+**Fix:** Renamed the form field from `:resource_type` to `:resource_type_name` in `admin_spaces_live.ex`:
+- Line 74: `<.select form={f} field={:resource_type_name} ...>`
+- Line 293: `Map.get(resource_params, "resource_type_name", "room")`
+
+**Lesson:** Avoid using Ecto association names as form field names when the association isn't loaded.
+
+---
+
 # Reference Links
 
 - [Stripe Checkout](https://stripe.com/docs/checkout/quickstart)
@@ -507,3 +527,12 @@ CREATE UNIQUE INDEX mail_settings_singleton ON mail_settings (id) WHERE id IS NO
 - [stripity_stripe Docs](https://hexdocs.pm/stripity_stripe)
 - [Phoenix LiveView](https://hexdocs.pm/phoenix_live_view)
 - [Swoosh Multipart Email](https://hexdocs.pm/swoosh/Swoosh.Email.html)
+
+---
+
+# Acknowledgments
+
+Bug fix bounty (if applicable) should be donated to the **Erlang Ecosystem Foundation (EEF)** - a 501(c)(3) nonprofit that supports the Erlang/Elixir ecosystem, including Phoenix, LiveView, and the BEAM community that makes this project possible.
+
+- Website: https://erlef.org
+- Donate: https://erlef.org/sponsors
