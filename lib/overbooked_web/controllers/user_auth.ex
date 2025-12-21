@@ -17,10 +17,19 @@ defmodule OverbookedWeb.UserAuth do
 
   def on_mount(:redirect_if_user_is_authenticated, _params, session, socket) do
     case session do
-      %{"user_token" => _} ->
-        {:halt,
-         socket
-         |> LiveView.redirect(to: Routes.home_path(socket, :index))}
+      %{"user_token" => user_token} ->
+        case Accounts.get_user_by_session_token(user_token) do
+          %User{} ->
+            {:halt,
+             socket
+             |> LiveView.redirect(to: Routes.home_path(socket, :index))}
+
+          _ ->
+            {:cont,
+             socket
+             |> Component.assign(:current_user, nil)
+             |> Component.assign(:is_admin, nil)}
+        end
 
       %{} ->
         {:cont,
@@ -76,7 +85,7 @@ defmodule OverbookedWeb.UserAuth do
             {:cont, new_socket}
 
           _ ->
-            {:cont, new_socket}
+            {:halt, redirect_require_login(socket)}
         end
 
       %{} ->
