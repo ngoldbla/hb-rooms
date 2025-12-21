@@ -4,6 +4,7 @@ defmodule OverbookedWeb.AdminSettingsLive do
   alias Overbooked.Settings
   alias Overbooked.Settings.MailSetting
   alias Overbooked.Settings.StripeSetting
+  alias Overbooked.Settings.ContractTerm
 
   @impl true
   def mount(_params, _session, socket) do
@@ -12,6 +13,9 @@ defmodule OverbookedWeb.AdminSettingsLive do
 
     stripe_setting = Settings.get_stripe_setting_for_display()
     stripe_changeset = Settings.change_stripe_setting(stripe_setting)
+
+    contract_terms = Settings.get_current_terms()
+    terms_changeset = Settings.change_contract_terms(contract_terms)
 
     webhook_url = OverbookedWeb.Endpoint.url() <> "/webhooks/stripe"
 
@@ -23,7 +27,10 @@ defmodule OverbookedWeb.AdminSettingsLive do
      |> assign(stripe_setting: stripe_setting)
      |> assign(stripe_changeset: stripe_changeset)
      |> assign(stripe_test_status: nil)
-     |> assign(webhook_url: webhook_url)}
+     |> assign(webhook_url: webhook_url)
+     |> assign(contract_terms: contract_terms)
+     |> assign(terms_changeset: terms_changeset)
+     |> assign(terms_preview: false)}
   end
 
   @impl true
@@ -335,6 +342,125 @@ defmodule OverbookedWeb.AdminSettingsLive do
             </div>
           </div>
         </div>
+
+        <!-- Contract Terms Section -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">
+                  Contract Terms
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                  Customize the terms and conditions shown during checkout. Users must accept these before proceeding.
+                </p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Version <%= @contract_terms.version %>
+                </span>
+                <%= if @contract_terms.effective_date do %>
+                  <span class="text-xs text-gray-500">
+                    Effective: <%= @contract_terms.effective_date %>
+                  </span>
+                <% end %>
+              </div>
+            </div>
+
+            <.form
+              :let={f}
+              for={@terms_changeset}
+              phx-change="validate_terms"
+              phx-submit="save_terms"
+              id="contract-terms-form"
+              class="mt-6 space-y-6"
+            >
+              <div>
+                <label for="contract_term_content" class="block text-sm font-medium text-gray-700">
+                  Terms Content (HTML)
+                </label>
+                <p class="mt-1 text-xs text-gray-500">
+                  Use HTML formatting. Saving changes will create a new version.
+                </p>
+                <div class="mt-2">
+                  <textarea
+                    id="contract_term_content"
+                    name="contract_term[content]"
+                    rows="12"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm font-mono"
+                  ><%= Phoenix.HTML.Form.input_value(f, :content) %></textarea>
+                  <.error form={f} field={:content} />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div class="flex items-center space-x-4">
+                  <.button type="submit" variant={:secondary}>
+                    Save Terms
+                  </.button>
+                  <.button type="button" phx-click="preview_terms" variant={:secondary}>
+                    Preview
+                  </.button>
+                  <.button
+                    type="button"
+                    phx-click="reset_terms"
+                    variant={:danger}
+                    data-confirm="Are you sure you want to reset to default terms? This will create a new version."
+                  >
+                    Reset to Default
+                  </.button>
+                </div>
+              </div>
+            </.form>
+          </div>
+        </div>
+
+        <!-- Terms Preview Modal -->
+        <%= if @terms_preview do %>
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 z-40" phx-click="close_terms_preview"></div>
+          <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                <div class="px-6 py-4 bg-gray-50 flex justify-between items-center">
+                  <h3 class="text-lg font-medium text-gray-900">Contract Terms Preview</h3>
+                  <button type="button" phx-click="close_terms_preview" class="text-gray-400 hover:text-gray-500">
+                    <.icon name={:x} class="h-5 w-5" />
+                  </button>
+                </div>
+                <div class="p-6 max-h-[70vh] overflow-y-auto">
+                  <div class="prose prose-sm max-w-none">
+                    <%= Phoenix.HTML.raw(@terms_preview_content) %>
+                  </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 flex justify-end">
+                  <.button type="button" phx-click="close_terms_preview" variant={:secondary}>
+                    Close
+                  </.button>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <.icon name={:information_circle} class="h-5 w-5 text-green-400" />
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">
+                Contract Terms Versioning
+              </h3>
+              <div class="mt-2 text-sm text-green-700">
+                <ul class="list-disc list-inside space-y-1">
+                  <li>Each content change automatically creates a new version</li>
+                  <li>Users must accept terms during checkout</li>
+                  <li>Contracts store the accepted terms version for compliance</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </.page>
     """
@@ -432,6 +558,65 @@ defmodule OverbookedWeb.AdminSettingsLive do
          socket
          |> assign(stripe_test_status: :error)
          |> put_flash(:error, "Stripe connection failed: #{message}")}
+    end
+  end
+
+  # Contract terms event handlers
+
+  def handle_event("validate_terms", %{"contract_term" => params}, socket) do
+    changeset =
+      socket.assigns.contract_terms
+      |> Settings.change_contract_terms(params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, terms_changeset: changeset)}
+  end
+
+  def handle_event("save_terms", %{"contract_term" => params}, socket) do
+    case Settings.update_terms(params) do
+      {:ok, terms} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Contract terms saved. New version: #{terms.version}")
+         |> assign(contract_terms: terms)
+         |> assign(terms_changeset: Settings.change_contract_terms(terms))}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Please fix the errors below.")
+         |> assign(terms_changeset: changeset)}
+    end
+  end
+
+  def handle_event("preview_terms", _params, socket) do
+    changeset = socket.assigns.terms_changeset
+    content = Ecto.Changeset.get_field(changeset, :content) || socket.assigns.contract_terms.content
+
+    {:noreply,
+     socket
+     |> assign(terms_preview: true)
+     |> assign(terms_preview_content: content)}
+  end
+
+  def handle_event("close_terms_preview", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(terms_preview: false)
+     |> assign(terms_preview_content: nil)}
+  end
+
+  def handle_event("reset_terms", _params, socket) do
+    case Settings.reset_terms_to_default() do
+      {:ok, terms} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Contract terms reset to default. New version: #{terms.version}")
+         |> assign(contract_terms: terms)
+         |> assign(terms_changeset: Settings.change_contract_terms(terms))}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to reset terms.")}
     end
   end
 end

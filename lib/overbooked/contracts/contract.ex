@@ -23,6 +23,10 @@ defmodule Overbooked.Contracts.Contract do
     field :refund_id, :string
     field :refunded_at, :utc_datetime
 
+    # Terms acceptance fields
+    field :accepted_terms_version, :integer
+    field :terms_accepted_at, :utc_datetime
+
     belongs_to :resource, Overbooked.Resources.Resource
     belongs_to :user, Overbooked.Accounts.User
 
@@ -30,7 +34,7 @@ defmodule Overbooked.Contracts.Contract do
   end
 
   @required_fields [:start_date, :end_date, :duration_months, :monthly_rate_cents, :total_amount_cents, :resource_id, :user_id]
-  @optional_fields [:status, :stripe_checkout_session_id, :stripe_payment_intent_id, :stripe_customer_id, :refund_amount_cents, :refund_id, :refunded_at]
+  @optional_fields [:status, :stripe_checkout_session_id, :stripe_payment_intent_id, :stripe_customer_id, :refund_amount_cents, :refund_id, :refunded_at, :accepted_terms_version, :terms_accepted_at]
 
   @doc false
   def changeset(contract, attrs) do

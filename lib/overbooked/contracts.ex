@@ -88,6 +88,16 @@ defmodule Overbooked.Contracts do
       stripe_customer_id: attrs.stripe_customer_id
     }
 
+    # Add terms acceptance fields if present
+    contract_attrs =
+      if attrs[:accepted_terms_version] do
+        contract_attrs
+        |> Map.put(:accepted_terms_version, attrs.accepted_terms_version)
+        |> Map.put(:terms_accepted_at, DateTime.utc_now() |> DateTime.truncate(:second))
+      else
+        contract_attrs
+      end
+
     Repo.transaction(fn ->
       {:ok, contract} =
         %Contract{}
