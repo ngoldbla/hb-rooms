@@ -99,47 +99,228 @@ defmodule OverbookedWeb.LiveHelpers do
 
   def admin_tabs(assigns) do
     ~H"""
-    <.tabs>
-      <:link active={@active_tab == :admin_users} navigate={Routes.admin_users_path(@socket, :index)}>
+    <!-- Mobile: Dropdown -->
+    <div class="block md:hidden">
+      <.admin_nav_mobile active_tab={@active_tab} socket={@socket} />
+    </div>
+
+    <!-- Tablet: Vertical Sidebar -->
+    <div class="hidden md:block lg:hidden">
+      <.admin_nav_tablet active_tab={@active_tab} socket={@socket} />
+    </div>
+
+    <!-- Desktop: Horizontal Tabs with Grouping -->
+    <div class="hidden lg:block">
+      <.admin_nav_desktop active_tab={@active_tab} socket={@socket} />
+    </div>
+    """
+  end
+
+  # Mobile dropdown navigation with grouped sections
+  defp admin_nav_mobile(assigns) do
+    ~H"""
+    <div class="relative">
+      <select
+        onchange="window.location.href = this.value"
+        class="block w-full py-3 px-4 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white shadow-sm"
+      >
+        <optgroup label="People">
+          <option value={Routes.admin_users_path(@socket, :index)} selected={@active_tab == :admin_users}>
+            Users
+          </option>
+          <option
+            value={Routes.admin_contracts_path(@socket, :index)}
+            selected={@active_tab == :admin_contracts}
+          >
+            Contracts
+          </option>
+        </optgroup>
+        <optgroup label="Spaces">
+          <option value={Routes.admin_rooms_path(@socket, :index)} selected={@active_tab == :admin_rooms}>
+            Rooms
+          </option>
+          <option value={Routes.admin_desks_path(@socket, :index)} selected={@active_tab == :admin_desks}>
+            Desks
+          </option>
+          <option
+            value={Routes.admin_amenities_path(@socket, :index)}
+            selected={@active_tab == :admin_amenities}
+          >
+            Amenities
+          </option>
+          <option
+            value={Routes.admin_spaces_path(@socket, :index)}
+            selected={@active_tab == :admin_spaces}
+          >
+            Office Spaces
+          </option>
+        </optgroup>
+        <optgroup label="Configuration">
+          <option
+            value={Routes.admin_settings_path(@socket, :index)}
+            selected={@active_tab == :admin_settings}
+          >
+            Settings
+          </option>
+          <option
+            value={Routes.admin_email_templates_path(@socket, :index)}
+            selected={@active_tab == :admin_email_templates}
+          >
+            Email Templates
+          </option>
+        </optgroup>
+      </select>
+    </div>
+    """
+  end
+
+  # Tablet vertical sidebar navigation
+  defp admin_nav_tablet(assigns) do
+    ~H"""
+    <nav class="space-y-1 py-2">
+      <!-- People Group -->
+      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        People
+      </div>
+      <.nav_link active={@active_tab == :admin_users} path={Routes.admin_users_path(@socket, :index)}>
         Users
-      </:link>
-      <:link active={@active_tab == :admin_rooms} navigate={Routes.admin_rooms_path(@socket, :index)}>
-        Rooms
-      </:link>
-      <:link active={@active_tab == :admin_desks} navigate={Routes.admin_desks_path(@socket, :index)}>
-        Desks
-      </:link>
-      <:link
-        active={@active_tab == :admin_amenities}
-        navigate={Routes.admin_amenities_path(@socket, :index)}
-      >
-        Amenities
-      </:link>
-      <:link
-        active={@active_tab == :admin_spaces}
-        navigate={Routes.admin_spaces_path(@socket, :index)}
-      >
-        Spaces
-      </:link>
-      <:link
+      </.nav_link>
+      <.nav_link
         active={@active_tab == :admin_contracts}
-        navigate={Routes.admin_contracts_path(@socket, :index)}
+        path={Routes.admin_contracts_path(@socket, :index)}
       >
         Contracts
-      </:link>
-      <:link
+      </.nav_link>
+      <!-- Spaces Group -->
+      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
+        Spaces
+      </div>
+      <.nav_link active={@active_tab == :admin_rooms} path={Routes.admin_rooms_path(@socket, :index)}>
+        Rooms
+      </.nav_link>
+      <.nav_link active={@active_tab == :admin_desks} path={Routes.admin_desks_path(@socket, :index)}>
+        Desks
+      </.nav_link>
+      <.nav_link
+        active={@active_tab == :admin_amenities}
+        path={Routes.admin_amenities_path(@socket, :index)}
+      >
+        Amenities
+      </.nav_link>
+      <.nav_link
+        active={@active_tab == :admin_spaces}
+        path={Routes.admin_spaces_path(@socket, :index)}
+      >
+        Office Spaces
+      </.nav_link>
+      <!-- Configuration Group -->
+      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
+        Configuration
+      </div>
+      <.nav_link
         active={@active_tab == :admin_settings}
-        navigate={Routes.admin_settings_path(@socket, :index)}
+        path={Routes.admin_settings_path(@socket, :index)}
       >
         Settings
-      </:link>
-      <:link
+      </.nav_link>
+      <.nav_link
         active={@active_tab == :admin_email_templates}
-        navigate={Routes.admin_email_templates_path(@socket, :index)}
+        path={Routes.admin_email_templates_path(@socket, :index)}
       >
-        Templates
-      </:link>
-    </.tabs>
+        Email Templates
+      </.nav_link>
+    </nav>
+    """
+  end
+
+  # Desktop horizontal tabs with grouping
+  defp admin_nav_desktop(assigns) do
+    ~H"""
+    <div class="space-y-2">
+      <div class="flex flex-row items-center space-x-6 text-xs text-gray-500 uppercase tracking-wider">
+        <span>People</span>
+        <span>Spaces</span>
+        <span class="ml-auto">Configuration</span>
+      </div>
+      <div class="flex flex-row flex-wrap gap-2">
+        <!-- People Group -->
+        <.desktop_tab active={@active_tab == :admin_users} path={Routes.admin_users_path(@socket, :index)}>
+          Users
+        </.desktop_tab>
+        <.desktop_tab
+          active={@active_tab == :admin_contracts}
+          path={Routes.admin_contracts_path(@socket, :index)}
+        >
+          Contracts
+        </.desktop_tab>
+        <div class="w-px h-6 bg-gray-300 self-center"></div>
+        <!-- Spaces Group -->
+        <.desktop_tab active={@active_tab == :admin_rooms} path={Routes.admin_rooms_path(@socket, :index)}>
+          Rooms
+        </.desktop_tab>
+        <.desktop_tab active={@active_tab == :admin_desks} path={Routes.admin_desks_path(@socket, :index)}>
+          Desks
+        </.desktop_tab>
+        <.desktop_tab
+          active={@active_tab == :admin_amenities}
+          path={Routes.admin_amenities_path(@socket, :index)}
+        >
+          Amenities
+        </.desktop_tab>
+        <.desktop_tab
+          active={@active_tab == :admin_spaces}
+          path={Routes.admin_spaces_path(@socket, :index)}
+        >
+          Office Spaces
+        </.desktop_tab>
+        <div class="w-px h-6 bg-gray-300 self-center"></div>
+        <!-- Configuration Group -->
+        <.desktop_tab
+          active={@active_tab == :admin_settings}
+          path={Routes.admin_settings_path(@socket, :index)}
+        >
+          Settings
+        </.desktop_tab>
+        <.desktop_tab
+          active={@active_tab == :admin_email_templates}
+          path={Routes.admin_email_templates_path(@socket, :index)}
+        >
+          Email Templates
+        </.desktop_tab>
+      </div>
+    </div>
+    """
+  end
+
+  # Helper component for sidebar navigation links
+  attr :active, :boolean, default: false
+  attr :path, :string, required: true
+  slot :inner_block, required: true
+
+  defp nav_link(assigns) do
+    ~H"""
+    <.link
+      navigate={@path}
+      class={"group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors #{if @active, do: "bg-primary-100 text-primary-700", else: "text-gray-700 hover:bg-gray-100"}"}
+    >
+      <%= render_slot(@inner_block) %>
+    </.link>
+    """
+  end
+
+  # Helper component for desktop tabs
+  attr :active, :boolean, default: false
+  attr :path, :string, required: true
+  slot :inner_block, required: true
+
+  defp desktop_tab(assigns) do
+    ~H"""
+    <.link
+      navigate={@path}
+      class={"px-3 py-1.5 text-sm font-medium rounded transition-colors #{if @active, do: "bg-gray-200 text-gray-700", else: "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}"}
+    >
+      <%= render_slot(@inner_block) %>
+    </.link>
     """
   end
 
