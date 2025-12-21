@@ -440,21 +440,139 @@ If migration fails partway:
 
 ## Next Steps / Future Enhancements
 
-Potential areas for expansion:
+### High Priority (High Impact, Moderate Effort)
 
-- [ ] **Analytics Dashboard**: Contract revenue, space utilization, popular resources
-- [ ] **Booking Analytics**: Most booked times, user activity
-- [ ] **Google Calendar Sync**: 2-way sync for bookings
-- [ ] **Recurring Bookings**: Weekly/daily patterns for bookings
-- [ ] **Resource Capacity**: Support for multi-person spaces
-- [ ] **Amenity Quantities**: Track available vs. total amenities
-- [ ] **CSV Import/Export**: Bulk operations for resources/users
-- [ ] **Email Notifications**: Booking reminders, contract expiration warnings
-- [ ] **Multi-tenancy**: Support multiple coworking locations
-- [ ] **Payment Plans**: Monthly installments for contracts
-- [ ] **Discount Codes**: Promo codes for contracts
-- [ ] **Resource Images**: Photo galleries for spaces
-- [ ] **Availability Search**: Find available resources by date/amenities
+These features provide significant value to users and space owners with reasonable implementation complexity.
+
+1. **Email Notifications** 📧
+   - Booking reminders (1 day before, 1 hour before)
+   - Contract expiration warnings (30 days, 7 days before)
+   - New booking confirmations
+   - **Impact:** Reduces no-shows, improves user engagement
+   - **Complexity:** Low - leverages existing email system
+   - **Dependencies:** None
+
+2. **Analytics Dashboard** 📊
+   - Contract revenue tracking and forecasting
+   - Space utilization rates (% booked vs. available)
+   - Popular resources and peak usage times
+   - Monthly/quarterly reports
+   - **Impact:** Business intelligence for space owners, data-driven decisions
+   - **Complexity:** Medium - requires aggregation queries and charts
+   - **Dependencies:** None
+
+3. **Recurring Bookings** 🔁
+   - Weekly/daily booking patterns (e.g., "every Monday 9am-5pm")
+   - Bulk booking creation
+   - Exception handling (skip holidays)
+   - **Impact:** Reduces friction for regular users, increases bookings
+   - **Complexity:** Medium - need recurring pattern logic
+   - **Dependencies:** None
+
+4. **Availability Search** 🔍
+   - Search by date range, amenities, capacity
+   - Filter by resource type
+   - "Find me a desk with monitor on Friday"
+   - **Impact:** Improves user experience, reduces booking time
+   - **Complexity:** Medium - search UI + query optimization
+   - **Dependencies:** Resource Capacity (optional but complementary)
+
+### Medium Priority (Good Value, Higher Effort)
+
+Features that add value but require more significant development effort.
+
+5. **Google Calendar Sync** 📅
+   - 2-way sync: bookings ↔ Google Calendar
+   - OAuth integration
+   - Conflict detection
+   - **Impact:** Helps users manage schedules, reduces double-bookings
+   - **Complexity:** High - OAuth, API integration, sync logic
+   - **Dependencies:** None
+
+6. **Resource Images** 🖼️
+   - Photo galleries for spaces/rooms/desks
+   - Image upload and management
+   - Thumbnail generation
+   - Display in browsing views
+   - **Impact:** Better user decision-making, more professional appearance
+   - **Complexity:** Medium - file uploads, storage, image processing
+   - **Dependencies:** None
+
+7. **Discount Codes** 💰
+   - Promo codes for contracts (% off or fixed amount)
+   - Code management (expiration, usage limits)
+   - Stripe coupon integration
+   - **Impact:** Marketing tool, customer acquisition
+   - **Complexity:** Medium - Stripe integration, validation logic
+   - **Dependencies:** None
+
+8. **CSV Import/Export** 📁
+   - Bulk import/export for resources, users, bookings
+   - Data backup and migration
+   - Template downloads
+   - **Impact:** Easier data management, onboarding
+   - **Complexity:** Medium - CSV parsing, validation, error handling
+   - **Dependencies:** None
+
+### Lower Priority (Nice-to-Have)
+
+Features that add value in specific scenarios or for scaling.
+
+9. **Resource Capacity** 👥
+   - Support for multi-person spaces (meeting rooms, hot desks)
+   - Track current occupancy vs. max capacity
+   - Partial booking support
+   - **Impact:** Enables new use cases (meeting rooms, shared spaces)
+   - **Complexity:** Medium - schema changes, booking logic updates
+   - **Dependencies:** Would enhance Availability Search
+
+10. **Payment Plans** 💳
+    - Monthly installments for 3+ month contracts
+    - Stripe subscription integration
+    - Auto-renewal options
+    - **Impact:** Reduces barrier for long-term contracts
+    - **Complexity:** High - Stripe subscriptions, payment tracking, failed payment handling
+    - **Dependencies:** None
+
+11. **Amenity Quantities** 🔢
+    - Track available vs. total amenities (e.g., 5 monitors, 3 in use)
+    - Real-time availability
+    - Booking-amenity linkage
+    - **Impact:** Better resource management for limited amenities
+    - **Complexity:** Medium - inventory tracking, availability checks
+    - **Dependencies:** None
+
+12. **Booking Analytics** 📈
+    - User activity reports
+    - Most booked times/resources
+    - User engagement metrics
+    - **Impact:** Business insights, identifies trends
+    - **Complexity:** Low-Medium - extends Analytics Dashboard
+    - **Dependencies:** Analytics Dashboard
+
+13. **Multi-tenancy** 🏢
+    - Support multiple coworking locations
+    - Per-location admin controls
+    - Location-specific resources and pricing
+    - **Impact:** Enables scaling to multiple sites
+    - **Complexity:** Very High - major architectural change
+    - **Dependencies:** Significant refactoring required
+
+---
+
+### Recommended Roadmap
+
+**Phase 4 (Q1):** Email Notifications + Analytics Dashboard
+- Quick wins with high user and business value
+- Builds on existing email infrastructure
+
+**Phase 5 (Q2):** Recurring Bookings + Availability Search
+- Major UX improvements
+- Complementary features that work well together
+
+**Phase 6 (Q3+):** Google Calendar Sync, Resource Images, Discount Codes
+- Polish and marketing features
+- Evaluate based on user feedback from Phases 4-5
 
 ---
 
