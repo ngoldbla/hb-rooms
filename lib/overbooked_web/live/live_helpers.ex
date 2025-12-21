@@ -116,251 +116,152 @@ defmodule OverbookedWeb.LiveHelpers do
     """
   end
 
-  # Mobile dropdown navigation with grouped sections - custom dropdown for consistent width
-  # Uses explicit left/right positioning instead of w-full for iOS Safari compatibility
-  # iOS Safari fix: -webkit-appearance: none, calc() width, block container, viewport fallback
+  # Mobile navigation using horizontal scrollable chips
+  # Avoids iOS Safari dropdown issues by using simple inline chips
+  # Consolidated: Users, Resources (Rooms+Desks+Amenities), Rentals (Spaces+Contracts), Settings
   defp admin_nav_mobile(assigns) do
-    assigns = assign(assigns, :current_label, get_nav_label(assigns.active_tab))
-
     ~H"""
-    <div style="display: block; width: 100%;">
-      <div class="relative" style="width: 100%;">
-        <button
-          type="button"
-          id="admin-nav-mobile-btn"
-          phx-click={show_dropdown("#admin-nav-mobile-dropdown")}
-          class="flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          style="width: calc(100% - 0px); min-width: 100%; -webkit-appearance: none; appearance: none;"
-          aria-haspopup="listbox"
-          aria-expanded="false"
-        >
-        <span class="block truncate"><%= @current_label %></span>
-        <svg class="h-5 w-5 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
-      </button>
-
-      <div
-        id="admin-nav-mobile-dropdown"
-        phx-click-away={hide_dropdown("#admin-nav-mobile-dropdown")}
-        class="hidden absolute z-20 mt-1 left-0 right-0 bg-white shadow-lg rounded-md border border-gray-200 py-1 max-h-80 overflow-auto"
-        role="listbox"
-        tabindex="-1"
-      >
-        <!-- People Group -->
-        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
-          People
-        </div>
-        <.mobile_nav_option
+    <div class="w-full overflow-x-auto pb-2 -mx-1">
+      <div class="flex flex-row gap-2 px-1 min-w-max">
+        <.nav_chip
           path={Routes.admin_users_path(@socket, :index)}
           active={@active_tab == :admin_users}
           label="Users"
+          icon={:users}
         />
-        <.mobile_nav_option
-          path={Routes.admin_contracts_path(@socket, :index)}
-          active={@active_tab == :admin_contracts}
-          label="Contracts"
-        />
-
-        <!-- Spaces Group -->
-        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-t border-gray-100">
-          Spaces
-        </div>
-        <.mobile_nav_option
+        <.nav_chip
           path={Routes.admin_rooms_path(@socket, :index)}
-          active={@active_tab == :admin_rooms}
-          label="Rooms"
+          active={@active_tab in [:admin_rooms, :admin_desks, :admin_amenities]}
+          label="Resources"
+          icon={:cube}
         />
-        <.mobile_nav_option
-          path={Routes.admin_desks_path(@socket, :index)}
-          active={@active_tab == :admin_desks}
-          label="Desks"
-        />
-        <.mobile_nav_option
-          path={Routes.admin_amenities_path(@socket, :index)}
-          active={@active_tab == :admin_amenities}
-          label="Amenities"
-        />
-        <.mobile_nav_option
+        <.nav_chip
           path={Routes.admin_spaces_path(@socket, :index)}
-          active={@active_tab == :admin_spaces}
-          label="Office Spaces"
+          active={@active_tab in [:admin_spaces, :admin_contracts]}
+          label="Rentals"
+          icon={:office_building}
         />
-
-        <!-- Configuration Group -->
-        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-t border-gray-100">
-          Configuration
-        </div>
-        <.mobile_nav_option
+        <.nav_chip
           path={Routes.admin_settings_path(@socket, :index)}
-          active={@active_tab == :admin_settings}
+          active={@active_tab in [:admin_settings, :admin_email_templates]}
           label="Settings"
+          icon={:cog}
         />
-        <.mobile_nav_option
-          path={Routes.admin_email_templates_path(@socket, :index)}
-          active={@active_tab == :admin_email_templates}
-          label="Email Templates"
-        />
-      </div>
       </div>
     </div>
     """
   end
 
-  # Helper component for mobile nav options
+  # Horizontal scrollable chip for navigation
   attr :path, :string, required: true
   attr :active, :boolean, required: true
   attr :label, :string, required: true
+  attr :icon, :atom, required: true
 
-  defp mobile_nav_option(assigns) do
+  defp nav_chip(assigns) do
     ~H"""
     <.link
       navigate={@path}
-      role="option"
-      aria-selected={@active}
-      class={"flex items-center px-3 py-3 text-sm cursor-pointer min-h-[44px] #{if @active, do: "bg-primary-50 text-primary-700", else: "text-gray-700 hover:bg-gray-50"}"}
+      class={"inline-flex items-center px-4 py-2.5 rounded-full text-sm font-medium transition-all min-h-[44px] whitespace-nowrap touch-manipulation #{if @active, do: "bg-primary-600 text-white shadow-md", else: "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300"}"}
     >
-      <%= if @active do %>
-        <svg class="h-5 w-5 text-primary-600 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-        </svg>
-      <% else %>
-        <span class="w-5 mr-2 flex-shrink-0"></span>
-      <% end %>
-      <span class="truncate"><%= @label %></span>
+      <.icon name={@icon} class="w-4 h-4 mr-2" />
+      <%= @label %>
     </.link>
     """
   end
 
-  # Get display label for nav tab
-  defp get_nav_label(tab) do
+  @doc """
+  Section tabs for navigating within a consolidated admin panel.
+  Used to switch between related items (e.g., Rooms/Desks/Amenities within Resources).
+  """
+  attr :active_tab, :atom, required: true
+  attr :socket, :any, required: true
+  attr :tabs, :list, required: true
+
+  def section_tabs(assigns) do
+    ~H"""
+    <div class="flex flex-row gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+      <%= for tab <- @tabs do %>
+        <.link
+          navigate={tab.path}
+          class={"flex-1 text-center px-3 py-2 text-sm font-medium rounded-md transition-all min-h-[40px] #{if @active_tab == tab.id, do: "bg-white text-gray-900 shadow-sm", else: "text-gray-600 hover:text-gray-900 hover:bg-gray-50"}"}
+        >
+          <%= tab.label %>
+        </.link>
+      <% end %>
+    </div>
+    """
+  end
+
+  # Get the consolidated group for an admin tab
+  def get_admin_group(tab) do
     case tab do
-      :admin_users -> "Users"
-      :admin_contracts -> "Contracts"
-      :admin_rooms -> "Rooms"
-      :admin_desks -> "Desks"
-      :admin_amenities -> "Amenities"
-      :admin_spaces -> "Office Spaces"
-      :admin_settings -> "Settings"
-      :admin_email_templates -> "Email Templates"
-      _ -> "Admin"
+      :admin_users -> :users
+      :admin_rooms -> :resources
+      :admin_desks -> :resources
+      :admin_amenities -> :resources
+      :admin_spaces -> :rentals
+      :admin_contracts -> :rentals
+      :admin_settings -> :settings
+      :admin_email_templates -> :settings
+      _ -> :unknown
     end
   end
 
-  # Tablet vertical sidebar navigation
+  # Tablet vertical sidebar navigation - consolidated to match mobile chips
   defp admin_nav_tablet(assigns) do
     ~H"""
     <nav class="space-y-1 py-2">
-      <!-- People Group -->
-      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-        People
-      </div>
       <.nav_link active={@active_tab == :admin_users} path={Routes.admin_users_path(@socket, :index)}>
-        Users
+        <.icon name={:users} class="w-4 h-4 mr-2" /> Users
       </.nav_link>
       <.nav_link
-        active={@active_tab == :admin_contracts}
-        path={Routes.admin_contracts_path(@socket, :index)}
+        active={@active_tab in [:admin_rooms, :admin_desks, :admin_amenities]}
+        path={Routes.admin_rooms_path(@socket, :index)}
       >
-        Contracts
-      </.nav_link>
-      <!-- Spaces Group -->
-      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
-        Spaces
-      </div>
-      <.nav_link active={@active_tab == :admin_rooms} path={Routes.admin_rooms_path(@socket, :index)}>
-        Rooms
-      </.nav_link>
-      <.nav_link active={@active_tab == :admin_desks} path={Routes.admin_desks_path(@socket, :index)}>
-        Desks
+        <.icon name={:cube} class="w-4 h-4 mr-2" /> Resources
       </.nav_link>
       <.nav_link
-        active={@active_tab == :admin_amenities}
-        path={Routes.admin_amenities_path(@socket, :index)}
-      >
-        Amenities
-      </.nav_link>
-      <.nav_link
-        active={@active_tab == :admin_spaces}
+        active={@active_tab in [:admin_spaces, :admin_contracts]}
         path={Routes.admin_spaces_path(@socket, :index)}
       >
-        Office Spaces
+        <.icon name={:office_building} class="w-4 h-4 mr-2" /> Rentals
       </.nav_link>
-      <!-- Configuration Group -->
-      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
-        Configuration
-      </div>
       <.nav_link
-        active={@active_tab == :admin_settings}
+        active={@active_tab in [:admin_settings, :admin_email_templates]}
         path={Routes.admin_settings_path(@socket, :index)}
       >
-        Settings
-      </.nav_link>
-      <.nav_link
-        active={@active_tab == :admin_email_templates}
-        path={Routes.admin_email_templates_path(@socket, :index)}
-      >
-        Email Templates
+        <.icon name={:cog} class="w-4 h-4 mr-2" /> Settings
       </.nav_link>
     </nav>
     """
   end
 
-  # Desktop horizontal tabs with grouping
+  # Desktop horizontal tabs - consolidated to match mobile chips
   defp admin_nav_desktop(assigns) do
     ~H"""
-    <div class="space-y-2">
-      <div class="flex flex-row items-center space-x-6 text-xs text-gray-500 uppercase tracking-wider">
-        <span>People</span>
-        <span>Spaces</span>
-        <span class="ml-auto">Configuration</span>
-      </div>
-      <div class="flex flex-row flex-wrap gap-2">
-        <!-- People Group -->
-        <.desktop_tab active={@active_tab == :admin_users} path={Routes.admin_users_path(@socket, :index)}>
-          Users
-        </.desktop_tab>
-        <.desktop_tab
-          active={@active_tab == :admin_contracts}
-          path={Routes.admin_contracts_path(@socket, :index)}
-        >
-          Contracts
-        </.desktop_tab>
-        <div class="w-px h-6 bg-gray-300 self-center"></div>
-        <!-- Spaces Group -->
-        <.desktop_tab active={@active_tab == :admin_rooms} path={Routes.admin_rooms_path(@socket, :index)}>
-          Rooms
-        </.desktop_tab>
-        <.desktop_tab active={@active_tab == :admin_desks} path={Routes.admin_desks_path(@socket, :index)}>
-          Desks
-        </.desktop_tab>
-        <.desktop_tab
-          active={@active_tab == :admin_amenities}
-          path={Routes.admin_amenities_path(@socket, :index)}
-        >
-          Amenities
-        </.desktop_tab>
-        <.desktop_tab
-          active={@active_tab == :admin_spaces}
-          path={Routes.admin_spaces_path(@socket, :index)}
-        >
-          Office Spaces
-        </.desktop_tab>
-        <div class="w-px h-6 bg-gray-300 self-center"></div>
-        <!-- Configuration Group -->
-        <.desktop_tab
-          active={@active_tab == :admin_settings}
-          path={Routes.admin_settings_path(@socket, :index)}
-        >
-          Settings
-        </.desktop_tab>
-        <.desktop_tab
-          active={@active_tab == :admin_email_templates}
-          path={Routes.admin_email_templates_path(@socket, :index)}
-        >
-          Email Templates
-        </.desktop_tab>
-      </div>
+    <div class="flex flex-row gap-3">
+      <.desktop_tab active={@active_tab == :admin_users} path={Routes.admin_users_path(@socket, :index)}>
+        <.icon name={:users} class="w-4 h-4 mr-1.5" /> Users
+      </.desktop_tab>
+      <.desktop_tab
+        active={@active_tab in [:admin_rooms, :admin_desks, :admin_amenities]}
+        path={Routes.admin_rooms_path(@socket, :index)}
+      >
+        <.icon name={:cube} class="w-4 h-4 mr-1.5" /> Resources
+      </.desktop_tab>
+      <.desktop_tab
+        active={@active_tab in [:admin_spaces, :admin_contracts]}
+        path={Routes.admin_spaces_path(@socket, :index)}
+      >
+        <.icon name={:office_building} class="w-4 h-4 mr-1.5" /> Rentals
+      </.desktop_tab>
+      <.desktop_tab
+        active={@active_tab in [:admin_settings, :admin_email_templates]}
+        path={Routes.admin_settings_path(@socket, :index)}
+      >
+        <.icon name={:cog} class="w-4 h-4 mr-1.5" /> Settings
+      </.desktop_tab>
     </div>
     """
   end

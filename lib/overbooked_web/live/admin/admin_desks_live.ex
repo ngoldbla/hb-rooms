@@ -26,6 +26,13 @@ defmodule OverbookedWeb.AdminDesksLive do
 
   @impl true
   def render(assigns) do
+    # Section tabs for Resources group (Rooms, Desks, Amenities)
+    assigns = assign(assigns, :resource_tabs, [
+      %{id: :admin_rooms, label: "Rooms", path: Routes.admin_rooms_path(assigns.socket, :index)},
+      %{id: :admin_desks, label: "Desks", path: Routes.admin_desks_path(assigns.socket, :index)},
+      %{id: :admin_amenities, label: "Amenities", path: Routes.admin_amenities_path(assigns.socket, :index)}
+    ])
+
     ~H"""
     <.header label="Admin">
       <.admin_tabs active_tab={@active_tab} socket={@socket} />
@@ -94,7 +101,10 @@ defmodule OverbookedWeb.AdminDesksLive do
 
       <:cancel>Cancel</:cancel>
     </.modal>
+
     <.page>
+      <.section_tabs active_tab={@active_tab} socket={@socket} tabs={@resource_tabs} />
+
       <div class="w-full space-y-12">
         <div class="w-full">
           <div class="w-full flex flex-row justify-between">
