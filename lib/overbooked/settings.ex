@@ -7,6 +7,8 @@ defmodule Overbooked.Settings do
   alias Overbooked.Repo
   alias Overbooked.Settings.MailSetting
   alias Overbooked.Settings.StripeSetting
+  alias Overbooked.Settings.EmailTemplate
+  alias Overbooked.Settings.DefaultTemplates
 
   @doc """
   Gets the mail setting singleton, creating a default one if it doesn't exist.
@@ -260,5 +262,103 @@ defmodule Overbooked.Settings do
     else
       {:error, "No Stripe API key configured"}
     end
+  end
+
+  # =============================================================================
+  # Email Templates
+  # =============================================================================
+
+  @doc """
+  Gets an email template by type.
+  Returns the custom template from DB if exists, otherwise returns the default template.
+  """
+  def get_email_template(template_type) when is_atom(template_type) do
+    get_email_template(Atom.to_string(template_type))
+  end
+
+  def get_email_template(template_type) when is_binary(template_type) do
+    case Repo.get_by(EmailTemplate, template_type: template_type) do
+      nil -> get_default_template(template_type)
+      template -> template
+    end
+  end
+
+  @doc """
+  Lists all email templates, including default templates for types not yet customized.
+  """
+  def list_email_templates do
+    custom_templates =
+      Repo.all(from t in EmailTemplate, order_by: t.template_type)
+      |> Enum.into(%{}, fn t -> {t.template_type, t} end)
+
+    EmailTemplate.template_types()
+    |> Enum.map(fn type ->
+      case Map.get(custom_templates, type) do
+        nil -> get_default_template(type)
+        template -> template
+      end
+    end)
+  end
+
+  @doc """
+  Updates or creates an email template.
+  """
+  def update_email_template(template_type, attrs) when is_atom(template_type) do
+    update_email_template(Atom.to_string(template_type), attrs)
+  end
+
+  def update_email_template(template_type, attrs) when is_binary(template_type) do
+    attrs = Map.put(attrs, "is_custom", true)
+
+    case Repo.get_by(EmailTemplate, template_type: template_type) do
+      nil ->
+        %EmailTemplate{template_type: template_type}
+        |> EmailTemplate.changeset(attrs)
+        |> Repo.insert()
+
+      template ->
+        template
+        |> EmailTemplate.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Resets a template to its default content.
+  """
+  def reset_email_template(template_type) when is_atom(template_type) do
+    reset_email_template(Atom.to_string(template_type))
+  end
+
+  def reset_email_template(template_type) when is_binary(template_type) do
+    case Repo.get_by(EmailTemplate, template_type: template_type) do
+      nil ->
+        {:ok, get_default_template(template_type)}
+
+      template ->
+        Repo.delete(template)
+        {:ok, get_default_template(template_type)}
+    end
+  end
+
+  @doc """
+  Returns a changeset for tracking email template changes.
+  """
+  def change_email_template(%EmailTemplate{} = template, attrs \\ %{}) do
+    EmailTemplate.changeset(template, attrs)
+  end
+
+  @doc """
+  Returns the default template struct for a given type.
+  """
+  def get_default_template(template_type) do
+    %EmailTemplate{
+      template_type: template_type,
+      subject: DefaultTemplates.default_subject(template_type),
+      html_body: DefaultTemplates.default_html_body(template_type),
+      text_body: DefaultTemplates.default_text_body(template_type),
+      variables: EmailTemplate.available_variables(template_type),
+      is_custom: false
+    }
   end
 end

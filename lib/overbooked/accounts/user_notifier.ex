@@ -2,6 +2,8 @@ defmodule Overbooked.Accounts.UserNotifier do
   import Swoosh.Email
 
   alias Overbooked.Mailer
+  alias Overbooked.Settings
+  alias Overbooked.EmailRenderer
   alias OverbookedWeb.EmailView
 
   # Delivers the email using the application mailer (plain text only).
@@ -20,7 +22,39 @@ defmodule Overbooked.Accounts.UserNotifier do
     end
   end
 
-  # Delivers multipart email (HTML + text).
+  # Delivers email using DB-stored templates with variable substitution.
+  defp deliver_from_template(recipient, template_type, assigns) do
+    {from_name, from_email} = get_from_address()
+
+    template = get_email_template(template_type)
+
+    # Build assigns for variable substitution
+    renderer_assigns = build_renderer_assigns(assigns)
+
+    # Render subject with variables
+    rendered_subject = EmailRenderer.render(template.subject, renderer_assigns)
+
+    # Render HTML body wrapped in email layout
+    rendered_html = render_email_with_layout(template.html_body, renderer_assigns)
+
+    # Render text body with variables
+    rendered_text = EmailRenderer.render(template.text_body || "", renderer_assigns)
+
+    email =
+      new()
+      |> to(recipient)
+      |> from({from_name, from_email})
+      |> subject(rendered_subject)
+      |> html_body(rendered_html)
+      |> text_body(rendered_text)
+
+    with {:ok, _metadata} <- Mailer.deliver(email) do
+      {:ok, email}
+    end
+  end
+
+  # Delivers multipart email (HTML + text) using file-based templates.
+  # Used for templates that don't have DB customization (e.g., booking_confirmation).
   defp deliver_multipart(recipient, subject, template, assigns) do
     {from_name, from_email} = get_from_address()
 
@@ -57,6 +91,132 @@ defmodule Overbooked.Accounts.UserNotifier do
     end
   end
 
+  defp get_email_template(template_type) do
+    if Process.whereis(Overbooked.Repo) do
+      try do
+        Settings.get_email_template(template_type)
+      rescue
+        _ -> Settings.get_default_template(template_type)
+      end
+    else
+      Settings.get_default_template(template_type)
+    end
+  end
+
+  defp build_renderer_assigns(assigns) do
+    base = %{
+      base_url: OverbookedWeb.Endpoint.url()
+    }
+
+    Map.merge(base, format_assigns_for_renderer(assigns))
+  end
+
+  defp format_assigns_for_renderer(assigns) do
+    assigns
+    |> Enum.reduce(%{}, fn
+      {:user, user}, acc ->
+        Map.put(acc, :user, %{
+          name: user.name || user.email,
+          email: user.email
+        })
+
+      {:contract, contract}, acc ->
+        Map.put(acc, :contract, %{
+          resource: %{
+            name: contract.resource.name,
+            description: contract.resource.description
+          },
+          start_date: format_date(contract.start_date),
+          end_date: format_date(contract.end_date),
+          duration_months: to_string(contract.duration_months),
+          total_amount: format_price(contract.total_amount_cents),
+          refund_amount: format_price(contract.refund_amount_cents),
+          refund_id: contract.refund_id || ""
+        })
+
+      {:url, url}, acc ->
+        Map.put(acc, :url, url)
+
+      {key, value}, acc when is_binary(value) or is_number(value) ->
+        Map.put(acc, key, value)
+
+      _, acc ->
+        acc
+    end)
+  end
+
+  defp format_date(nil), do: ""
+  defp format_date(%Date{} = date), do: Calendar.strftime(date, "%B %d, %Y")
+  defp format_date(date), do: to_string(date)
+
+  defp format_price(nil), do: "$0.00"
+  defp format_price(cents) when is_integer(cents) do
+    dollars = cents / 100
+    "$#{:erlang.float_to_binary(dollars, decimals: 2)}"
+  end
+
+  defp render_email_with_layout(content, assigns) do
+    rendered_content = EmailRenderer.render(content, assigns)
+    base_url = OverbookedWeb.Endpoint.url()
+
+    """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="color-scheme" content="light dark">
+      <style>
+        :root { color-scheme: light dark; }
+        body, table, td { margin: 0; padding: 0; }
+        img { border: 0; display: block; max-width: 100%; }
+        @media (prefers-color-scheme: dark) {
+          .email-bg { background-color: #1a1a2e !important; }
+          .content-bg { background-color: #000824 !important; }
+          .text-primary { color: #ffffff !important; }
+          .text-secondary { color: #a0aec0 !important; }
+        }
+        @media only screen and (max-width: 600px) {
+          .container { width: 100% !important; }
+          .content-padding { padding: 24px 16px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Nunito Sans', Arial, sans-serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-bg" style="background-color: #f4f4f5;">
+        <tr>
+          <td align="center" style="padding: 40px 20px;">
+            <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding-bottom: 32px;">
+                  <img src="#{base_url}/images/hatchbridge-logo.svg" alt="Hatchbridge Rooms" width="180" style="height: auto;">
+                </td>
+              </tr>
+              <tr>
+                <td class="content-bg content-padding" style="background-color: #ffffff; border-radius: 12px; padding: 40px;">
+                  #{rendered_content}
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding-top: 32px;">
+                  <p class="text-secondary" style="margin: 0; color: #6b7280; font-size: 12px;">
+                    Hatchbridge Rooms<br>
+                    <a href="#{base_url}" style="color: #6b7280;">Visit Dashboard</a>
+                  </p>
+                  <p style="margin: 16px 0 0; color: #9ca3af; font-size: 11px;">
+                    &copy; #{Date.utc_today().year} Hatchbridge. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+  end
+
   defp get_from_address do
     # Try to get from database settings first
     case get_mail_config() do
@@ -90,11 +250,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   def deliver_user_invitation_instructions(email, url) do
     user = %{name: email, email: email}
 
-    deliver_multipart(
+    deliver_from_template(
       email,
-      "Welcome to Hatchbridge Rooms",
       "welcome",
-      %{user: user, url: url, preheader: "Confirm your account to get started"}
+      %{user: user, url: url}
     )
   end
 
@@ -102,11 +261,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   Deliver instructions to confirm account.
   """
   def deliver_confirmation_instructions(user, url) do
-    deliver_multipart(
+    deliver_from_template(
       user.email,
-      "Welcome to Hatchbridge Rooms",
       "welcome",
-      %{user: user, url: url, preheader: "Confirm your account to get started"}
+      %{user: user, url: url}
     )
   end
 
@@ -114,11 +272,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   Deliver instructions to reset a user password.
   """
   def deliver_reset_password_instructions(user, url) do
-    deliver_multipart(
+    deliver_from_template(
       user.email,
-      "Reset your password",
       "password_reset",
-      %{user: user, url: url, preheader: "Reset your Hatchbridge Rooms password"}
+      %{user: user, url: url}
     )
   end
 
@@ -126,20 +283,11 @@ defmodule Overbooked.Accounts.UserNotifier do
   Deliver instructions to update a user email.
   """
   def deliver_update_email_instructions(user, url) do
-    deliver(user.email, "Update email instructions", """
-
-    ==============================
-
-    Hi #{user.email},
-
-    You can change your email by visiting the URL below:
-
-    #{url}
-
-    If you didn't request this change, please ignore this.
-
-    ==============================
-    """)
+    deliver_from_template(
+      user.email,
+      "update_email",
+      %{user: user, url: url}
+    )
   end
 
   @doc """
@@ -163,15 +311,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   Contract should be preloaded with :resource and :user associations.
   """
   def deliver_contract_confirmation(user, contract) do
-    deliver_multipart(
+    deliver_from_template(
       user.email,
-      "Your contract is confirmed",
       "contract_confirmation",
-      %{
-        user: user,
-        contract: contract,
-        preheader: "#{contract.resource.name} - #{contract.duration_months} month contract confirmed"
-      }
+      %{user: user, contract: contract}
     )
   end
 
@@ -180,15 +323,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   Contract should be preloaded with :resource association.
   """
   def deliver_contract_cancelled(user, contract) do
-    deliver_multipart(
+    deliver_from_template(
       user.email,
-      "Contract cancelled",
       "contract_cancelled",
-      %{
-        user: user,
-        contract: contract,
-        preheader: "Your #{contract.resource.name} contract has been cancelled"
-      }
+      %{user: user, contract: contract}
     )
   end
 
@@ -197,15 +335,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   Contract should be preloaded with :resource association and have refund fields populated.
   """
   def deliver_refund_notification(user, contract) do
-    deliver_multipart(
+    deliver_from_template(
       user.email,
-      "Refund processed for your contract",
       "refund_notification",
-      %{
-        user: user,
-        contract: contract,
-        preheader: "Your refund of #{Overbooked.Contracts.format_price(contract.refund_amount_cents)} has been processed"
-      }
+      %{user: user, contract: contract}
     )
   end
 end
