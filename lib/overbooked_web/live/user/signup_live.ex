@@ -130,20 +130,16 @@ defmodule OverbookedWeb.SignupLive do
 
   def handle_event("save", %{"user" => user_params}, socket) do
     case Accounts.register_user_with_token(socket.assigns.token, user_params) do
-      {:ok, user} ->
-        {:ok, _} =
-          Accounts.deliver_user_confirmation_instructions(
-            user,
-            &Routes.user_confirmation_url(socket, :confirm_account, &1)
-          )
-
+      {:ok, _user} ->
+        # User is auto-confirmed when registering via invitation (email already verified)
+        # Redirect directly to login
         {:noreply,
          socket
          |> put_flash(
            :info,
-           "Account created successfully. Please check your email for confirmation instructions."
+           "Account created successfully! Please log in."
          )
-         |> redirect(to: Routes.user_resend_confirmation_path(socket, :index))}
+         |> redirect(to: Routes.login_path(socket, :index))}
 
       {:error,
        %Ecto.Changeset{errors: [registration_token: {"Invalid registration token!", []}]} =

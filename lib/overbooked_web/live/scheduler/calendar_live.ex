@@ -149,20 +149,45 @@ defmodule OverbookedWeb.ScheduleLive.Calendar do
         <%= for {hour, index} <- Enum.with_index(@hours_of_day) do %>
           <div class={"#{if index !=0 and round_hour?(hour) and first_slot?(@bookings_hourly, @hours_of_day, index), do: "border-t"} #{if booking_by_hour(@bookings_hourly, hour), do: "pr-1"} flex flex-col h-3 w-full relative"}>
             <%= if booking = booking_by_hour(@bookings_hourly, hour) do %>
-              <div class={"bg-#{booking.resource.color}-400 #{if first_slot?(@bookings_hourly, @hours_of_day, index), do: "rounded-t-[5px]"} #{if last_slot?(@bookings_hourly, @hours_of_day, index), do: "rounded-b-[5px]"} h-full w-full relative"}>
+              <button
+                phx-click={show_modal("booking-info-#{booking.id}-modal")}
+                class={"bg-#{booking.resource.color}-400 #{if first_slot?(@bookings_hourly, @hours_of_day, index), do: "rounded-t-[5px]"} #{if last_slot?(@bookings_hourly, @hours_of_day, index), do: "rounded-b-[5px]"} h-full w-full relative hover:opacity-80 cursor-pointer"}
+              >
                 <%= if first_slot?(@bookings_hourly, @hours_of_day, index) do %>
                   <div class="text-white text-xs text-left absolute top-0 left-0 p-1 w-full break-all z-10 ">
                     <%= booking.user.name %>
                   </div>
                 <% end %>
-              </div>
+              </button>
+              <%= if first_slot?(@bookings_hourly, @hours_of_day, index) do %>
+                <.modal id={"booking-info-#{booking.id}-modal"} icon={nil}>
+                  <:title>Booking Details</:title>
+                  <div class="space-y-3">
+                    <div>
+                      <p class="text-sm text-gray-500">Booked by</p>
+                      <p class="font-medium"><%= booking.user.name %></p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-500">Resource</p>
+                      <p class="font-medium"><%= booking.resource.name %></p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-500">Time</p>
+                      <p class="font-medium"><%= from_to_datetime(booking.start_at, booking.end_at, :hours) %></p>
+                    </div>
+                  </div>
+                  <:cancel>Close</:cancel>
+                </.modal>
+              <% end %>
             <% else %>
               <button
-                class={"#{if @older, do: "bg-gray-50", else: "hover:bg-gray-100 hover:h-12 absolute top-0 left-0"} top-0 h-full w-full"}
+                class={"#{if @older, do: "bg-gray-50 cursor-not-allowed", else: "hover:bg-gray-100 hover:h-12 absolute top-0 left-0 cursor-pointer"} top-0 h-full w-full"}
                 disabled={@older}
                 phx-click={
-                  JS.push("hour", value: %{date: Timex.format!(@date, "{YYYY}-{0M}-{0D}"), hour: hour})
-                  |> show_modal("booking-form-modal")
+                  unless @older do
+                    JS.push("hour", value: %{date: Timex.format!(@date, "{YYYY}-{0M}-{0D}"), hour: hour})
+                    |> show_modal("booking-form-modal")
+                  end
                 }
               >
               </button>
@@ -226,12 +251,12 @@ defmodule OverbookedWeb.ScheduleLive.Calendar do
       |> assign(:weekday, weekday)
       |> assign(:yearday, yearday)
       |> assign(:title, title)
+      |> assign(:older, older)
 
     ~H"""
     <button
-      disabled={older}
       phx-click={show_modal("a-#{@yearday}-modal")}
-      class={"#{if index == 0, do: "col-start-#{@weekday}"} #{if is_today, do: "border-purple-500 border-2"} #{if older, do: "bg-gray-50", else: "hover:bg-gray-100"} overflow-hidden h-32 border flex flex-col justify-start items-center text-center"}
+      class={"#{if index == 0, do: "col-start-#{@weekday}"} #{if is_today, do: "border-purple-500 border-2"} #{if @older, do: "bg-gray-50"} hover:bg-gray-100 overflow-hidden h-32 border flex flex-col justify-start items-center text-center"}
     >
       <div class="text-gray-400 font-bold mt-2"><%= @text %></div>
       <div class="flex flex-col space-y-1 mt-2 w-full px-1">
@@ -256,16 +281,22 @@ defmodule OverbookedWeb.ScheduleLive.Calendar do
     >
       <:title><%= @title %></:title>
 
-      <%= for booking <- @bookings do %>
-        <.event_row
-          user_name={booking.user.name}
-          resource_name={booking.resource.name}
-          color={booking.resource.color}
-          time={from_to_datetime(booking.start_at, booking.end_at, :hours)}
-        >
-        </.event_row>
+      <%= if Enum.empty?(@bookings) do %>
+        <p class="text-gray-500 text-sm italic">No bookings for this day.</p>
+      <% else %>
+        <%= for booking <- @bookings do %>
+          <.event_row
+            user_name={booking.user.name}
+            resource_name={booking.resource.name}
+            color={booking.resource.color}
+            time={from_to_datetime(booking.start_at, booking.end_at, :hours)}
+          >
+          </.event_row>
+        <% end %>
       <% end %>
-      <:confirm>Book</:confirm>
+      <%= unless @older do %>
+        <:confirm>Book</:confirm>
+      <% end %>
       <:cancel>Close</:cancel>
     </.modal>
     """

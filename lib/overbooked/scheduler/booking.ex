@@ -16,6 +16,18 @@ defmodule Overbooked.Schedule.Booking do
     booking
     |> cast(attrs, [:end_at, :start_at])
     |> validate_required([:end_at, :start_at])
+    |> validate_end_after_start()
+  end
+
+  defp validate_end_after_start(changeset) do
+    start_at = get_field(changeset, :start_at)
+    end_at = get_field(changeset, :end_at)
+
+    if start_at && end_at && DateTime.compare(end_at, start_at) != :gt do
+      add_error(changeset, :end_at, "must be after start time")
+    else
+      changeset
+    end
   end
 
   def put_user(%Ecto.Changeset{} = changeset, %Overbooked.Accounts.User{} = user) do

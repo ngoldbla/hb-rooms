@@ -181,13 +181,14 @@ defmodule Overbooked.Accounts do
     end)
   end
 
-  # email scoped token
+  # email scoped token - auto-confirm since email is already verified via invitation
   defp maybe_register_user_with_token(token, attrs) do
     if token.scoped_to_email == (attrs["email"] || attrs[:email]) do
       Repo.transaction(fn ->
         with {:ok, user} <- register_user(attrs),
-             {:ok, _registration_token} <- consume_registration_token(token, user) do
-          user
+             {:ok, confirmed_user} <- confirm_user_directly(user),
+             {:ok, _registration_token} <- consume_registration_token(token, confirmed_user) do
+          confirmed_user
         else
           {:error, error} ->
             Repo.rollback(error)
@@ -198,6 +199,13 @@ defmodule Overbooked.Accounts do
     else
       invalid_token_response(attrs)
     end
+  end
+
+  # Directly confirm a user without token verification (used for invited users)
+  defp confirm_user_directly(user) do
+    user
+    |> User.confirm_changeset()
+    |> Repo.update()
   end
 
   defp invalid_token_response(attrs) do

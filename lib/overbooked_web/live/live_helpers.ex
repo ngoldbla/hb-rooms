@@ -953,12 +953,12 @@ defmodule OverbookedWeb.LiveHelpers do
   def header(assigns) do
     ~H"""
     <div class="border-b bg-white sticky top-0 border-gray-200 px-4 pt-4 pb-1 sm:flex sm:items-center sm:justify-between sm:px-6 lg:px-8 mx-auto">
-      <div class="min-w-0 mr-6">
+      <div class="min-w-0 sm:mr-6">
         <h1 tabindex="-1" class="text-3xl">
           <%= @label %>
         </h1>
       </div>
-      <div class="flex-1">
+      <div class="w-full sm:flex-1 mt-2 sm:mt-0">
         <%= render_slot(@inner_block) %>
       </div>
     </div>
