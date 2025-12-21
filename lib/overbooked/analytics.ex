@@ -176,7 +176,12 @@ defmodule Overbooked.Analytics do
     )
     |> Repo.all()
     |> Enum.map(fn resource ->
-      booked = to_float(resource.booked_minutes)
+      booked = case resource.booked_minutes do
+        nil -> 0
+        %Decimal{} = minutes -> minutes |> Decimal.to_float()
+        minutes when is_number(minutes) -> minutes
+        _ -> 0
+      end
       utilization = if available_minutes > 0, do: booked / available_minutes * 100, else: 0.0
 
       %{
