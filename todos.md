@@ -1,8 +1,8 @@
 # Phase 4-5 Feature Development Tracking
 
 **Started:** 2024-12-21
-**Status:** Phase 4.1 Complete - Email Notifications
-**Branch:** `claude/plan-phase-4-5-features-0ucmN`
+**Status:** Phase 4 Complete - Email Notifications + Analytics Dashboard
+**Branch:** `claude/complete-phase-4-2-WYdHp`
 
 ---
 
@@ -108,46 +108,50 @@ priv/repo/migrations/20251221230200_add_expiration_warning_to_contracts.exs
 
 ---
 
-### 4.2 Analytics Dashboard
+### 4.2 Analytics Dashboard ✅
 
 **Goal:** Revenue tracking and space utilization metrics
 
-#### Step 7: Analytics Context
-- [ ] Create `Overbooked.Analytics` context module
-- [ ] Implement revenue queries:
+#### Step 7: Analytics Context ✅
+- [x] Create `Overbooked.Analytics` context module
+- [x] Implement revenue queries:
   - `monthly_revenue(year, month)` - from contracts
   - `revenue_by_resource(start_date, end_date)`
   - `revenue_trend(months)` - for charting
-- [ ] Implement utilization queries:
+- [x] Implement utilization queries:
   - `space_utilization(resource, start_date, end_date)`
   - Formula: `booked_minutes / available_minutes`
-  - Use `date_trunc` for grouping
+  - `all_resources_utilization(start_date, end_date)`
+  - `overall_utilization(start_date, end_date)`
 
-#### Step 8: Analytics LiveView
-- [ ] Create `AdminAnalyticsLive` in `/admin/analytics`
-- [ ] Add date range filter (Today, Week, Month, Custom)
-- [ ] Handle URL query params for shareable links
-- [ ] Display KPI cards: Total Revenue, Utilization %, Active Contracts
+#### Step 8: Analytics LiveView ✅
+- [x] Create `AdminAnalyticsLive` in `/admin/analytics`
+- [x] Add date range filter (Today, 7 Days, 30 Days, 90 Days, Custom)
+- [x] Handle URL query params for shareable links
+- [x] Display KPI cards: Total Revenue, Active Contracts, Overall Utilization
 
-#### Step 9: Charting Integration
-- [ ] Add Chart.js via CDN or npm
-- [ ] Create `ChartHook` LiveView hook
-- [ ] Use `push_event` to send data to hook
-- [ ] Implement revenue line chart
-- [ ] Implement utilization bar chart per resource
+#### Step 9: Charting Integration ✅
+- [x] Add Chart.js via CDN
+- [x] Create Chart hooks (RevenueChart, UtilizationChart, TrendChart)
+- [x] Implement revenue bar chart by resource
+- [x] Implement utilization bar chart per resource
+- [x] Implement revenue trend line chart (12 months)
 
-#### Step 10: Admin Navigation Update
-- [ ] Add "Analytics" tab to admin nav
-- [ ] Add analytics route to router
+#### Step 10: Admin Navigation Update ✅
+- [x] Add "Analytics" tab to admin nav (mobile, tablet, desktop)
+- [x] Add analytics route to router
+- [x] Update Nav module for active tab tracking
 
-**Files to Create/Modify:**
+**Files Created/Modified:**
 ```
 lib/overbooked/analytics.ex (new)
 lib/overbooked_web/live/admin/admin_analytics_live.ex (new)
-assets/js/hooks/chart_hook.js (new)
-assets/js/app.js (register hook)
+assets/js/hooks/charts.js (new)
+assets/js/hooks/index.js (updated)
 lib/overbooked_web/router.ex (add route)
-lib/overbooked_web/nav.ex (add nav item)
+lib/overbooked_web/live/nav.ex (add nav item)
+lib/overbooked_web/live/live_helpers.ex (add analytics nav)
+lib/overbooked_web/templates/layout/root.html.heex (add Chart.js CDN)
 ```
 
 ---
@@ -260,6 +264,13 @@ priv/repo/migrations/XXXX_add_resource_capacity.exs (optional)
   - Added 2 new email template types (booking_reminder, contract_expiration_warning)
   - Templates auto-appear in admin email editor
   - Idempotency via `reminder_sent_at` / `expiration_warning_sent_at` timestamps
+- [x] **Phase 4.2 Complete**: Analytics Dashboard
+  - Created Analytics context with revenue and utilization queries
+  - Implemented AdminAnalyticsLive with date range filters (Today, 7/30/90 days, Custom)
+  - Added KPI cards: Total Revenue, Active Contracts, Overall Utilization
+  - Integrated Chart.js for visualizations (revenue by resource, utilization, trend)
+  - Added Analytics navigation to admin panel (mobile, tablet, desktop)
+  - URL-shareable analytics with query params
 
 ---
 
