@@ -26,7 +26,7 @@ defmodule OverbookedWeb.BillingController do
           {:ok, session} ->
             redirect(conn, external: session.url)
 
-          {:error, %Stripe.Error{message: message}} ->
+          {:error, %{message: message}} ->
             conn
             |> put_flash(:error, "Could not access billing portal: #{message}")
             |> redirect(to: "/contracts")
