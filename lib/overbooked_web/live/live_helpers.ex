@@ -119,7 +119,7 @@ defmodule OverbookedWeb.LiveHelpers do
   # Mobile dropdown navigation with grouped sections
   defp admin_nav_mobile(assigns) do
     ~H"""
-    <div class="relative">
+    <div class="relative w-full">
       <select
         onchange="window.location.href = this.value"
         class="block w-full py-3 px-4 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white shadow-sm"
