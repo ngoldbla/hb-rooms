@@ -23,6 +23,8 @@
 | Contract Emails | ✅ Complete | `templates/email/contract_confirmation.html.heex`, `contract_cancelled.html.heex` |
 | Stripe Customer Portal | ✅ Complete | `lib/overbooked/stripe.ex`, `billing_controller.ex`, `contracts_live.ex` |
 | Refund Handling | ✅ Complete | `stripe.ex`, `contracts.ex`, `stripe_webhook_controller.ex`, `admin_contracts_live.ex` |
+| Email Template Editor | 📋 Planned | `lib/overbooked/settings/email_template.ex`, `admin_email_templates_live.ex` |
+| Contract Terms Editor | 📋 Planned | `lib/overbooked/settings/contract_term.ex`, `admin_settings_live.ex` |
 
 ## Brand Assets
 
@@ -394,6 +396,712 @@ Handle refunds for cancelled contracts.
 - Contract details modal shows refund information
 - Email templates: `refund_notification.html.heex`, `refund_notification.text.heex`
 - `deliver_refund_notification/2` in `user_notifier.ex`
+
+---
+
+# Phase 3: Email Templates + Contract Terms
+
+## Overview
+
+**Goal:** Enable admin customization of email content and contract terms without code changes.
+
+**Key Features:**
+- Rich text editor for email template customization
+- Variable substitution system (@user.name, @contract.resource.name, etc.)
+- Preview pane with sample data
+- Reset to default functionality
+- Contract terms acceptance flow with DB-backed terms storage
+
+---
+
+## 3.1 Email Template Editor
+
+Admin UI to customize all 6 email types with rich text editing, variable preview, and reset to default.
+
+### Current Email Types
+1. **Welcome Email** - `templates/email/welcome.html.heex`
+2. **Password Reset** - `templates/email/reset_password.html.heex`
+3. **Update Email** - `templates/email/update_email.html.heex`
+4. **Contract Confirmation** - `templates/email/contract_confirmation.html.heex`
+5. **Contract Cancelled** - `templates/email/contract_cancelled.html.heex`
+6. **Refund Notification** - `templates/email/refund_notification.html.heex`
+
+### Tasks
+
+| # | Task | File(s) | Validation |
+|---|------|---------|------------|
+| 3.1.1 | Create `email_templates` migration | `priv/repo/migrations/` | Table with template_type unique index |
+| 3.1.2 | Create `EmailTemplate` schema | `lib/overbooked/settings/email_template.ex` | Fields: template_type, subject, html_body, text_body, variables |
+| 3.1.3 | Add email template functions to Settings context | `lib/overbooked/settings.ex` | get_template, update_template, reset_to_default |
+| 3.1.4 | Create seed data for default templates | `priv/repo/seeds.exs` | Populate with current template content |
+| 3.1.5 | Create AdminEmailTemplatesLive | `lib/overbooked_web/live/admin/admin_email_templates_live.ex` | List view with edit buttons |
+| 3.1.6 | Add rich text editor component | `lib/overbooked_web/components/rich_text_editor.ex` | Trix or Quill.js integration |
+| 3.1.7 | Create template edit modal | `admin_email_templates_live.ex` | Edit subject + HTML body |
+| 3.1.8 | Implement variable substitution engine | `lib/overbooked/email_renderer.ex` | Replace @user.name, @contract.*, etc. |
+| 3.1.9 | Add preview pane with sample data | `admin_email_templates_live.ex` | Live preview with variables replaced |
+| 3.1.10 | Add reset to default button | `admin_email_templates_live.ex` | Restore original template content |
+| 3.1.11 | Update UserNotifier to use DB templates | `lib/overbooked/accounts/user_notifier.ex` | Load from Settings.get_template |
+| 3.1.12 | Add route and navigation | `router.ex`, `live_helpers.ex` | `/admin/email-templates` |
+
+### Schema Pattern
+
+```elixir
+# lib/overbooked/settings/email_template.ex
+defmodule Overbooked.Settings.EmailTemplate do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  @template_types ~w(welcome password_reset update_email contract_confirmation contract_cancelled refund_notification)
+
+  schema "email_templates" do
+    field :template_type, :string
+    field :subject, :string
+    field :html_body, :string
+    field :text_body, :string
+    field :variables, {:array, :string}, default: []
+    field :is_custom, :boolean, default: false
+
+    timestamps()
+  end
+
+  def changeset(template, attrs) do
+    template
+    |> cast(attrs, [:template_type, :subject, :html_body, :text_body, :variables, :is_custom])
+    |> validate_required([:template_type, :subject, :html_body])
+    |> validate_inclusion(:template_type, @template_types)
+    |> unique_constraint(:template_type)
+  end
+
+  def template_types, do: @template_types
+
+  # Returns list of available variables for each template type
+  def available_variables(:welcome), do: ["@user.name", "@user.email"]
+  def available_variables(:password_reset), do: ["@user.name", "@reset_url", "@expires_in"]
+  def available_variables(:update_email), do: ["@user.name", "@new_email", "@confirm_url"]
+  def available_variables(:contract_confirmation) do
+    ["@user.name", "@contract.resource.name", "@contract.start_date",
+     "@contract.end_date", "@contract.duration_months", "@contract.total_amount",
+     "@receipt_url"]
+  end
+  def available_variables(:contract_cancelled) do
+    ["@user.name", "@contract.resource.name", "@contract.end_date", "@refund_info"]
+  end
+  def available_variables(:refund_notification) do
+    ["@user.name", "@contract.resource.name", "@refund_amount", "@refund_date"]
+  end
+end
+```
+
+### Settings Context Functions
+
+```elixir
+# Add to lib/overbooked/settings.ex
+
+alias Overbooked.Settings.EmailTemplate
+
+def get_email_template(template_type) do
+  case Repo.get_by(EmailTemplate, template_type: to_string(template_type)) do
+    nil -> get_default_template(template_type)
+    template -> template
+  end
+end
+
+def list_email_templates do
+  Repo.all(from t in EmailTemplate, order_by: t.template_type)
+end
+
+def update_email_template(template_type, attrs) do
+  case Repo.get_by(EmailTemplate, template_type: to_string(template_type)) do
+    nil ->
+      %EmailTemplate{template_type: to_string(template_type)}
+      |> EmailTemplate.changeset(Map.put(attrs, :is_custom, true))
+      |> Repo.insert()
+    template ->
+      template
+      |> EmailTemplate.changeset(Map.put(attrs, :is_custom, true))
+      |> Repo.update()
+  end
+end
+
+def reset_email_template(template_type) do
+  default = get_default_template(template_type)
+
+  case Repo.get_by(EmailTemplate, template_type: to_string(template_type)) do
+    nil -> {:ok, default}
+    template ->
+      template
+      |> EmailTemplate.changeset(%{
+        subject: default.subject,
+        html_body: default.html_body,
+        text_body: default.text_body,
+        is_custom: false
+      })
+      |> Repo.update()
+  end
+end
+
+defp get_default_template(template_type) do
+  # Load from embedded default templates
+  # These are the current .heex files converted to strings
+  %EmailTemplate{
+    template_type: to_string(template_type),
+    subject: default_subject(template_type),
+    html_body: default_html_body(template_type),
+    text_body: default_text_body(template_type),
+    variables: EmailTemplate.available_variables(template_type),
+    is_custom: false
+  }
+end
+```
+
+### Email Renderer Module
+
+```elixir
+# lib/overbooked/email_renderer.ex
+defmodule Overbooked.EmailRenderer do
+  @moduledoc """
+  Renders email templates with variable substitution.
+  Supports @user.name, @contract.resource.name, etc.
+  """
+
+  def render(template, assigns) do
+    template
+    |> replace_variables(assigns)
+    |> Phoenix.HTML.raw()
+  end
+
+  defp replace_variables(content, assigns) do
+    Regex.replace(~r/@(\w+(?:\.\w+)*)/, content, fn _, path ->
+      get_nested_value(assigns, String.split(path, "."))
+    end)
+  end
+
+  defp get_nested_value(map, [key]) when is_map(map) do
+    Map.get(map, String.to_atom(key)) |> to_string()
+  end
+
+  defp get_nested_value(map, [key | rest]) when is_map(map) do
+    case Map.get(map, String.to_atom(key)) do
+      nil -> ""
+      value -> get_nested_value(value, rest)
+    end
+  end
+
+  defp get_nested_value(_, _), do: ""
+end
+```
+
+### Admin UI - Template List
+
+```elixir
+# lib/overbooked_web/live/admin/admin_email_templates_live.ex
+defmodule OverbookedWeb.Admin.AdminEmailTemplatesLive do
+  use OverbookedWeb, :live_view
+
+  alias Overbooked.Settings
+  alias Overbooked.Settings.EmailTemplate
+
+  def mount(_params, _session, socket) do
+    {:ok, assign(socket,
+      templates: Settings.list_email_templates(),
+      selected_template: nil,
+      preview_data: nil
+    )}
+  end
+
+  def render(assigns) do
+    ~H"""
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl font-semibold text-gray-900">Email Templates</h1>
+          <p class="mt-2 text-sm text-gray-700">
+            Customize email templates sent to users. Use variables like @user.name to personalize content.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <%= for template <- @templates do %>
+          <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900">
+              <%= humanize_template_type(template.template_type) %>
+            </h3>
+            <%= if template.is_custom do %>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                Customized
+              </span>
+            <% end %>
+            <p class="mt-2 text-sm text-gray-500">
+              <strong>Subject:</strong> <%= template.subject %>
+            </p>
+            <div class="mt-4 flex space-x-2">
+              <.button phx-click="edit_template" phx-value-type={template.template_type} size={:sm}>
+                Edit
+              </.button>
+              <%= if template.is_custom do %>
+                <.button phx-click="reset_template" phx-value-type={template.template_type}
+                         variant={:secondary} size={:sm}>
+                  Reset to Default
+                </.button>
+              <% end %>
+            </div>
+
+            <!-- Available Variables -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <p class="text-xs font-medium text-gray-700">Available Variables:</p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <%= for var <- template.variables do %>
+                  <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded"><%= var %></code>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%= if @selected_template do %>
+        <.live_component
+          module={OverbookedWeb.Admin.EmailTemplateEditorComponent}
+          id="template-editor"
+          template={@selected_template}
+          on_close={JS.push("close_editor")}
+        />
+      <% end %>
+    </div>
+    """
+  end
+
+  def handle_event("edit_template", %{"type" => type}, socket) do
+    template = Settings.get_email_template(type)
+    {:noreply, assign(socket, selected_template: template)}
+  end
+
+  def handle_event("reset_template", %{"type" => type}, socket) do
+    case Settings.reset_email_template(type) do
+      {:ok, _} ->
+        {:noreply, socket
+          |> put_flash(:info, "Template reset to default")
+          |> assign(templates: Settings.list_email_templates())}
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to reset template")}
+    end
+  end
+end
+```
+
+### Rich Text Editor Component
+
+```elixir
+# lib/overbooked_web/components/rich_text_editor.ex
+defmodule OverbookedWeb.Components.RichTextEditor do
+  use Phoenix.Component
+
+  attr :id, :string, required: true
+  attr :value, :string, default: ""
+  attr :on_change, :any, required: true
+
+  def rich_text_editor(assigns) do
+    ~H"""
+    <div class="rich-text-editor">
+      <!-- Use Trix editor (included via CDN or npm) -->
+      <input type="hidden" id={@id <> "-input"} value={@value} />
+      <trix-editor
+        input={@id <> "-input"}
+        phx-update="ignore"
+        phx-hook="RichTextEditor"
+        data-change-event={@on_change}
+      ></trix-editor>
+    </div>
+    """
+  end
+end
+```
+
+### JavaScript Hook for Rich Text Editor
+
+```javascript
+// assets/js/app.js - Add this hook
+Hooks.RichTextEditor = {
+  mounted() {
+    this.editor = this.el;
+    this.editor.addEventListener("trix-change", (e) => {
+      const content = e.target.value;
+      this.pushEvent(this.el.dataset.changeEvent, { content });
+    });
+  }
+}
+```
+
+---
+
+## 3.2 Contract Terms Editor
+
+DB-backed contract terms shown before checkout with required acceptance checkbox.
+
+### Tasks
+
+| # | Task | File(s) | Validation |
+|---|------|---------|------------|
+| 3.2.1 | Create `contract_terms` migration | `priv/repo/migrations/` | Singleton table with version tracking |
+| 3.2.2 | Create `ContractTerm` schema | `lib/overbooked/settings/contract_term.ex` | Fields: content, version, effective_date |
+| 3.2.3 | Add contract terms functions to Settings | `lib/overbooked/settings.ex` | get_current_terms, update_terms |
+| 3.2.4 | Add terms UI to AdminSettingsLive | `admin_settings_live.ex` | Rich text editor section |
+| 3.2.5 | Add accepted_terms_version to contracts | Migration + schema | Track which version user accepted |
+| 3.2.6 | Update checkout modal with terms display | `spaces_live.ex` | Show terms + acceptance checkbox |
+| 3.2.7 | Add terms acceptance validation | `lib/overbooked/contracts.ex` | Require acceptance before creating contract |
+| 3.2.8 | Add terms preview modal | `spaces_live.ex` | Expandable terms view |
+
+### Schema Pattern
+
+```elixir
+# lib/overbooked/settings/contract_term.ex
+defmodule Overbooked.Settings.ContractTerm do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  schema "contract_terms" do
+    field :content, :string
+    field :version, :integer, default: 1
+    field :effective_date, :date
+    field :is_active, :boolean, default: true
+
+    timestamps()
+  end
+
+  def changeset(term, attrs) do
+    term
+    |> cast(attrs, [:content, :version, :effective_date, :is_active])
+    |> validate_required([:content, :version])
+    |> increment_version_if_changed()
+  end
+
+  defp increment_version_if_changed(changeset) do
+    if changed?(changeset, :content) do
+      put_change(changeset, :version, (get_field(changeset, :version) || 0) + 1)
+      |> put_change(:effective_date, Date.utc_today())
+    else
+      changeset
+    end
+  end
+end
+```
+
+### Migration - Add Terms Acceptance to Contracts
+
+```elixir
+# priv/repo/migrations/YYYYMMDDHHMMSS_add_terms_acceptance_to_contracts.exs
+defmodule Overbooked.Repo.Migrations.AddTermsAcceptanceToContracts do
+  use Ecto.Migration
+
+  def change do
+    alter table(:contracts) do
+      add :accepted_terms_version, :integer
+      add :terms_accepted_at, :utc_datetime
+    end
+  end
+end
+```
+
+### Settings Context Functions
+
+```elixir
+# Add to lib/overbooked/settings.ex
+
+alias Overbooked.Settings.ContractTerm
+
+def get_current_contract_terms do
+  Repo.one(from t in ContractTerm, where: t.is_active == true, order_by: [desc: t.version], limit: 1)
+  || get_default_contract_terms()
+end
+
+def get_contract_terms_version(version) do
+  Repo.get_by(ContractTerm, version: version)
+end
+
+def update_contract_terms(attrs) do
+  case get_current_contract_terms() do
+    %{id: nil} = default ->
+      %ContractTerm{}
+      |> ContractTerm.changeset(Map.put(attrs, :is_active, true))
+      |> Repo.insert()
+    current ->
+      # Create new version
+      %ContractTerm{}
+      |> ContractTerm.changeset(Map.merge(attrs, %{
+        version: current.version + 1,
+        is_active: true
+      }))
+      |> Repo.insert()
+      |> case do
+        {:ok, new_term} ->
+          # Deactivate old version
+          current
+          |> ContractTerm.changeset(%{is_active: false})
+          |> Repo.update()
+          {:ok, new_term}
+        error -> error
+      end
+  end
+end
+
+defp get_default_contract_terms do
+  %ContractTerm{
+    content: default_contract_terms_content(),
+    version: 0,
+    effective_date: Date.utc_today(),
+    is_active: true
+  }
+end
+
+defp default_contract_terms_content do
+  """
+  <h2>Office Space Rental Agreement</h2>
+
+  <p>By proceeding with this reservation, you agree to the following terms:</p>
+
+  <ol>
+    <li><strong>Payment:</strong> Payment is due in full at the time of booking.</li>
+    <li><strong>Cancellation:</strong> Cancellations made within 48 hours of the start date are non-refundable.</li>
+    <li><strong>Use:</strong> The space must be used in accordance with building rules and regulations.</li>
+    <li><strong>Liability:</strong> You are responsible for any damage to the space during your rental period.</li>
+  </ol>
+
+  <p>For full terms and conditions, please contact our support team.</p>
+  """
+end
+```
+
+### Admin UI - Contract Terms Section
+
+```html
+<!-- Add to admin_settings_live.ex -->
+<div class="bg-white shadow rounded-lg mt-8">
+  <div class="px-4 py-5 sm:p-6">
+    <h3 class="text-lg font-medium leading-6 text-gray-900">
+      Contract Terms & Conditions
+    </h3>
+    <p class="mt-1 text-sm text-gray-500">
+      Customize the terms shown to users before they complete a space rental.
+      Changing terms creates a new version automatically.
+    </p>
+
+    <%= if @current_terms do %>
+      <div class="mt-4 bg-gray-50 p-3 rounded">
+        <p class="text-sm text-gray-700">
+          <strong>Current Version:</strong> <%= @current_terms.version %>
+          <span class="ml-4"><strong>Effective Date:</strong> <%= @current_terms.effective_date %></span>
+        </p>
+      </div>
+    <% end %>
+
+    <.form for={@terms_changeset} phx-submit="save_contract_terms" class="mt-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Terms Content</label>
+        <.rich_text_editor
+          id="contract-terms-editor"
+          value={@terms_changeset.data.content}
+          on_change="update_terms_content"
+        />
+        <p class="mt-2 text-xs text-gray-500">
+          Use HTML formatting. Users will see this before checkout and must accept to proceed.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-between pt-4 mt-4 border-t">
+        <div class="flex items-center space-x-4">
+          <.button type="submit">Save Terms</.button>
+          <.button type="button" phx-click="preview_terms" variant={:secondary}>
+            Preview
+          </.button>
+        </div>
+        <p class="text-xs text-gray-500">
+          Saving will create version <%= (@current_terms.version || 0) + 1 %>
+        </p>
+      </div>
+    </.form>
+  </div>
+</div>
+```
+
+### Updated Checkout Modal with Terms
+
+```elixir
+# Update in spaces_live.ex - checkout modal
+def render_checkout_modal(assigns) do
+  ~H"""
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <h3 class="text-lg font-medium">Reserve <%= @selected_space.name %></h3>
+
+        <!-- Duration selection -->
+        <div class="mt-4">
+          <!-- existing duration selection code -->
+        </div>
+
+        <!-- Contract Terms -->
+        <div class="mt-6 border-t pt-6">
+          <h4 class="text-sm font-medium text-gray-900">Terms & Conditions</h4>
+
+          <div class="mt-3 bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+            <%= Phoenix.HTML.raw(@contract_terms.content) %>
+          </div>
+
+          <div class="mt-4 flex items-start">
+            <input
+              type="checkbox"
+              id="accept-terms"
+              phx-click="toggle_terms_acceptance"
+              checked={@terms_accepted}
+              class="h-4 w-4 text-blue-600 border-gray-300 rounded"
+            />
+            <label for="accept-terms" class="ml-2 text-sm text-gray-700">
+              I have read and agree to the terms and conditions (Version <%= @contract_terms.version %>)
+            </label>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="mt-6 flex justify-end space-x-3">
+          <.button phx-click="close_checkout" variant={:secondary}>Cancel</.button>
+          <.button
+            phx-click="proceed_to_payment"
+            disabled={!@terms_accepted}
+          >
+            Proceed to Payment
+          </.button>
+        </div>
+      </div>
+    </div>
+  </div>
+  """
+end
+```
+
+### Updated Contract Schema
+
+```elixir
+# Update lib/overbooked/contracts/contract.ex
+schema "contracts" do
+  # ... existing fields ...
+  field :accepted_terms_version, :integer
+  field :terms_accepted_at, :utc_datetime
+
+  # ... existing associations ...
+end
+
+def changeset(contract, attrs) do
+  contract
+  |> cast(attrs, [..., :accepted_terms_version, :terms_accepted_at])
+  |> validate_required([..., :accepted_terms_version])
+  # ... existing validations ...
+end
+```
+
+---
+
+## Phase 3 Implementation Order
+
+1. **3.1 Email Template Editor** - Foundation for customizable emails
+   - Start with database schema and Settings context functions
+   - Build admin UI with rich text editor integration
+   - Implement variable substitution engine
+   - Update UserNotifier to use DB templates
+   - Add preview functionality
+
+2. **3.2 Contract Terms Editor** - Legal compliance and customization
+   - Create contract terms schema with versioning
+   - Add admin UI for editing terms
+   - Update checkout flow to display and require acceptance
+   - Track accepted version in contracts table
+
+---
+
+## Database Schema Additions
+
+### email_templates
+```sql
+CREATE TABLE email_templates (
+  id BIGSERIAL PRIMARY KEY,
+  template_type VARCHAR NOT NULL,
+  subject VARCHAR NOT NULL,
+  html_body TEXT NOT NULL,
+  text_body TEXT,
+  variables VARCHAR[] DEFAULT '{}',
+  is_custom BOOLEAN DEFAULT false,
+  inserted_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+CREATE UNIQUE INDEX email_templates_type_idx ON email_templates (template_type);
+```
+
+### contract_terms
+```sql
+CREATE TABLE contract_terms (
+  id BIGSERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1,
+  effective_date DATE,
+  is_active BOOLEAN DEFAULT true,
+  inserted_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+CREATE INDEX contract_terms_version_idx ON contract_terms (version);
+CREATE INDEX contract_terms_active_idx ON contract_terms (is_active);
+```
+
+### contracts (additions)
+```sql
+ALTER TABLE contracts ADD COLUMN accepted_terms_version INTEGER;
+ALTER TABLE contracts ADD COLUMN terms_accepted_at TIMESTAMP;
+```
+
+---
+
+## Testing Checklist - Phase 3
+
+### Email Template Editor
+- [ ] Can view all 6 email templates
+- [ ] Can edit template subject and HTML body
+- [ ] Rich text editor saves formatting correctly
+- [ ] Variable substitution works (@user.name, @contract.*, etc.)
+- [ ] Preview pane shows correctly with sample data
+- [ ] Reset to default restores original template
+- [ ] Custom templates show "Customized" badge
+- [ ] Emails sent use DB templates when available
+- [ ] Falls back to file templates if DB template missing
+
+### Contract Terms
+- [ ] Can edit contract terms in admin settings
+- [ ] Rich text formatting persists
+- [ ] Version increments automatically when content changes
+- [ ] Checkout modal displays current terms
+- [ ] Acceptance checkbox required to proceed
+- [ ] Cannot submit payment without accepting terms
+- [ ] Contract records accepted version number
+- [ ] Historical terms versions are preserved
+- [ ] Can preview terms before saving
+
+---
+
+## Dependencies
+
+### NPM Packages (for Rich Text Editor)
+```json
+{
+  "dependencies": {
+    "trix": "^2.0.0"
+  }
+}
+```
+
+Or use CDN:
+```html
+<!-- In root.html.heex -->
+<link rel="stylesheet" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
+<script src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
+```
 
 ---
 
