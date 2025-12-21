@@ -9,6 +9,273 @@
 
 ---
 
+## 🚧 Phase 3.5: Admin Navigation UX Refactor (PLANNING)
+
+### Problem Statement
+
+The current admin navigation uses a horizontal tab bar (`flex flex-row space-x-2`) with 8 tabs:
+- Users, Rooms, Desks, Amenities, Spaces, Contracts, Settings, Templates
+
+**Critical UX Issues:**
+1. **Horizontal scrolling on mobile** - violates mobile UX best practices
+2. **Not all tabs visible at once** - users must discover options by swiping
+3. **Insufficient touch targets** - tabs are too small for thumbs
+4. **No responsive behavior** - desktop UI is "shrunk" rather than adapted
+
+**Current Implementation:** `lib/overbooked_web/live/live_helpers.ex:753-767` (tabs component)
+
+### Design Solution: Hybrid Approach
+
+Combine multiple strategies from UX best practices:
+
+#### Mobile (< 768px): Grouped Dropdown Navigation
+
+**Pattern:** iOS Settings-style index with logical grouping
+
+```
+[Dropdown: People ▼]
+┌─────────────────────────┐
+│ People                  │
+│ ├─ Users                │
+│ └─ Contracts            │
+│ Spaces                  │
+│ ├─ Rooms                │
+│ ├─ Desks                │
+│ ├─ Amenities            │
+│ └─ Office Spaces        │
+│ Configuration           │
+│ ├─ Settings             │
+│ └─ Email Templates      │
+└─────────────────────────┘
+```
+
+**Implementation:**
+- Native `<select>` (accessible, platform-native feel)
+- OR custom dropdown with touch-optimized targets (min 44px)
+- Current section shown with down chevron
+- Groups collapse in dropdown for scanability
+- LiveView handles navigation on selection
+
+#### Tablet (768px - 1024px): Vertical Sidebar
+
+**Pattern:** Full vertical list, always visible
+
+```
+┌──────────────┐
+│ People       │
+│  Users       │ ← 44px min height
+│  Contracts   │
+│              │
+│ Spaces       │
+│  Rooms       │
+│  Desks       │
+│  Amenities   │
+│  Office Sp.. │
+│              │
+│ Config       │
+│  Settings    │
+│  Templates   │
+└──────────────┘
+```
+
+#### Desktop (> 1024px): Enhanced Horizontal Tabs
+
+**Pattern:** Current horizontal tabs with grouping indicators
+
+```
+People          Spaces                    Configuration
+─────────────   ────────────────────────  ─────────────────
+Users Contracts Rooms Desks Amenities Spaces Settings Templates
+```
+
+### Logical Grouping
+
+| Group | Items | Rationale |
+|-------|-------|-----------|
+| **People** | Users, Contracts | User management and their commitments |
+| **Spaces** | Rooms, Desks, Amenities, Office Spaces | Physical resources |
+| **Configuration** | Settings, Email Templates | System-wide configuration |
+
+### Implementation Plan
+
+#### Files to Modify
+
+1. **`lib/overbooked_web/live/live_helpers.ex`**
+   - Create `admin_nav_mobile/1` component (dropdown)
+   - Create `admin_nav_tablet/1` component (vertical sidebar)
+   - Create `admin_nav_desktop/1` component (enhanced horizontal)
+   - Update `admin_tabs/1` to dispatch based on viewport
+
+2. **CSS/Tailwind Classes**
+   - Mobile: `block md:hidden` for dropdown
+   - Tablet: `hidden md:block lg:hidden` for sidebar
+   - Desktop: `hidden lg:flex` for horizontal tabs
+
+#### Component Structure
+
+```elixir
+def admin_tabs(assigns) do
+  ~H"""
+  <!-- Mobile: Dropdown -->
+  <div class="block md:hidden">
+    <.admin_nav_mobile active_tab={@active_tab} socket={@socket} />
+  </div>
+
+  <!-- Tablet: Vertical Sidebar -->
+  <div class="hidden md:block lg:hidden">
+    <.admin_nav_tablet active_tab={@active_tab} socket={@socket} />
+  </div>
+
+  <!-- Desktop: Horizontal Tabs -->
+  <div class="hidden lg:flex">
+    <.admin_nav_desktop active_tab={@active_tab} socket={@socket} />
+  </div>
+  """
+end
+```
+
+#### Mobile Dropdown Implementation
+
+```elixir
+defp admin_nav_mobile(assigns) do
+  ~H"""
+  <div class="relative">
+    <select
+      phx-change="admin_nav_change"
+      class="block w-full py-3 px-4 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
+    >
+      <optgroup label="People">
+        <option value="/admin/users" selected={@active_tab == :admin_users}>Users</option>
+        <option value="/admin/contracts" selected={@active_tab == :admin_contracts}>Contracts</option>
+      </optgroup>
+      <optgroup label="Spaces">
+        <option value="/admin/rooms" selected={@active_tab == :admin_rooms}>Rooms</option>
+        <option value="/admin/desks" selected={@active_tab == :admin_desks}>Desks</option>
+        <option value="/admin/amenities" selected={@active_tab == :admin_amenities}>Amenities</option>
+        <option value="/admin/spaces" selected={@active_tab == :admin_spaces}>Office Spaces</option>
+      </optgroup>
+      <optgroup label="Configuration">
+        <option value="/admin/settings" selected={@active_tab == :admin_settings}>Settings</option>
+        <option value="/admin/email-templates" selected={@active_tab == :admin_email_templates}>Email Templates</option>
+      </optgroup>
+    </select>
+  </div>
+  """
+end
+
+# Handle navigation in mount/3
+def handle_event("admin_nav_change", %{"value" => path}, socket) do
+  {:noreply, push_navigate(socket, to: path)}
+end
+```
+
+#### Tablet Vertical Sidebar Implementation
+
+```elixir
+defp admin_nav_tablet(assigns) do
+  ~H"""
+  <nav class="space-y-1 py-2">
+    <!-- People Group -->
+    <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+      People
+    </div>
+    <.nav_link active={@active_tab == :admin_users} path={Routes.admin_users_path(@socket, :index)}>
+      Users
+    </.nav_link>
+    <.nav_link active={@active_tab == :admin_contracts} path={Routes.admin_contracts_path(@socket, :index)}>
+      Contracts
+    </.nav_link>
+
+    <!-- Spaces Group -->
+    <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
+      Spaces
+    </div>
+    <.nav_link active={@active_tab == :admin_rooms} path={Routes.admin_rooms_path(@socket, :index)}>
+      Rooms
+    </.nav_link>
+    <!-- ... more items ... -->
+  </nav>
+  """
+end
+
+defp nav_link(assigns) do
+  ~H"""
+  <.link
+    navigate={@path}
+    class={"group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors #{if @active, do: "bg-primary-100 text-primary-700", else: "text-gray-700 hover:bg-gray-100"}"}
+  >
+    <%= render_slot(@inner_block) %>
+  </.link>
+  """
+end
+```
+
+### Touch Ergonomics Checklist
+
+- [x] Minimum 44px tap targets (py-2.5 = 40px + text height ≈ 48px)
+- [x] No truncated labels (full width on mobile)
+- [x] Clear active state (bg-primary-100 for active)
+- [x] All options visible without scrolling (dropdown reveals all)
+- [x] Mobile-first breakpoint logic (explicit components per viewport)
+
+### Testing Plan
+
+1. **Mobile (< 768px)**
+   - [ ] Dropdown shows current section
+   - [ ] All 8 sections visible in dropdown
+   - [ ] Tap targets ≥ 44px
+   - [ ] Navigation works without page reload (LiveView)
+   - [ ] No horizontal scrolling
+
+2. **Tablet (768px - 1024px)**
+   - [ ] Vertical sidebar visible
+   - [ ] Grouped sections with labels
+   - [ ] Active state clear
+   - [ ] Sidebar doesn't interfere with content
+
+3. **Desktop (> 1024px)**
+   - [ ] Horizontal tabs with grouping
+   - [ ] All tabs visible without scrolling
+   - [ ] Hover states work
+
+### Alternative: Settings Index Pattern
+
+If dropdown feels too "app-like" for a web context, consider a dedicated index page:
+
+**Route:** `/admin` → Index page with cards
+**Routes:** `/admin/users`, `/admin/rooms`, etc. → Specific sections
+
+```elixir
+# admin_index_live.ex
+def render(assigns) do
+  ~H"""
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <.admin_section_card
+      title="People"
+      items={[
+        %{label: "Users", path: Routes.admin_users_path(@socket, :index)},
+        %{label: "Contracts", path: Routes.admin_contracts_path(@socket, :index)}
+      ]}
+    />
+    <.admin_section_card title="Spaces" items={[...]} />
+    <.admin_section_card title="Configuration" items={[...]} />
+  </div>
+  """
+end
+```
+
+**Pros:** Very clear on mobile, no navigation "chrome"
+**Cons:** Extra tap to reach sections, breaks muscle memory
+
+### Decision Required
+
+Choose implementation approach:
+1. **Dropdown (Recommended)** - Best mobile UX, minimal layout changes
+2. **Index page** - Most orthodox, clearest mobile hierarchy
+3. **Hybrid** - Dropdown on mobile, index on desktop
+
+---
+
 ## Architecture Overview
 
 ### Application Structure
