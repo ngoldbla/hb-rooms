@@ -35,12 +35,20 @@ defmodule OverbookedWeb.AdminSettingsLive do
 
   @impl true
   def render(assigns) do
+    # Section tabs for Settings group (Settings, Email Templates)
+    assigns = assign(assigns, :settings_tabs, [
+      %{id: :admin_settings, label: "Settings", path: Routes.admin_settings_path(assigns.socket, :index)},
+      %{id: :admin_email_templates, label: "Email Templates", path: Routes.admin_email_templates_path(assigns.socket, :index)}
+    ])
+
     ~H"""
     <.header label="Admin">
       <.admin_tabs active_tab={@active_tab} socket={@socket} />
     </.header>
 
     <.page>
+      <.section_tabs active_tab={@active_tab} socket={@socket} tabs={@settings_tabs} />
+
       <div class="w-full space-y-8">
         <div class="bg-white shadow rounded-lg">
           <div class="px-4 py-5 sm:p-6">

@@ -41,6 +41,12 @@ defmodule OverbookedWeb.AdminSpacesLive do
 
   @impl true
   def render(assigns) do
+    # Section tabs for Rentals group (Spaces, Contracts)
+    assigns = assign(assigns, :rentals_tabs, [
+      %{id: :admin_spaces, label: "Spaces", path: Routes.admin_spaces_path(assigns.socket, :index)},
+      %{id: :admin_contracts, label: "Contracts", path: Routes.admin_contracts_path(assigns.socket, :index)}
+    ])
+
     ~H"""
     <.header label="Admin">
       <.admin_tabs active_tab={@active_tab} socket={@socket} />
@@ -158,6 +164,8 @@ defmodule OverbookedWeb.AdminSpacesLive do
     </.modal>
 
     <.page>
+      <.section_tabs active_tab={@active_tab} socket={@socket} tabs={@rentals_tabs} />
+
       <div class="w-full space-y-12">
         <div class="w-full">
           <div class="w-full flex flex-row justify-between">
