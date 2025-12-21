@@ -130,7 +130,7 @@ defmodule OverbookedWeb.LiveHelpers do
           id="admin-nav-mobile-btn"
           phx-click={show_dropdown("#admin-nav-mobile-dropdown")}
           class="flex items-center justify-between py-3 px-4 text-base text-left border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          style="width: calc(100% - 0px); min-width: 100%; -webkit-appearance: none; appearance: none;"
+          style="width: 100%; min-width: calc(100vw - 2rem); -webkit-appearance: none; appearance: none;"
           aria-haspopup="listbox"
           aria-expanded="false"
         >
