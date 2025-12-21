@@ -109,6 +109,7 @@ defmodule Overbooked.Analytics do
       |> Repo.one()
       |> case do
         nil -> 0
+        %Decimal{} = minutes -> minutes |> Decimal.to_float() |> trunc()
         minutes -> trunc(minutes)
       end
 
@@ -228,6 +229,7 @@ defmodule Overbooked.Analytics do
       |> Repo.one()
       |> case do
         nil -> 0
+        %Decimal{} = minutes -> minutes |> Decimal.to_float() |> trunc()
         minutes -> trunc(minutes)
       end
 
