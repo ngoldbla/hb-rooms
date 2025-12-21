@@ -15,9 +15,9 @@ defmodule Overbooked.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Overbooked.PubSub},
       # Start the Endpoint (http/https)
-      OverbookedWeb.Endpoint
-      # Start a worker by calling: Overbooked.Worker.start_link(arg)
-      # {Overbooked.Worker, arg}
+      OverbookedWeb.Endpoint,
+      # Start Oban for background job processing
+      {Oban, Application.fetch_env!(:overbooked, Oban)}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

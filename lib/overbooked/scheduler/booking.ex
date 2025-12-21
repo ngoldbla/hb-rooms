@@ -5,6 +5,7 @@ defmodule Overbooked.Schedule.Booking do
   schema "bookings" do
     field :end_at, :utc_datetime
     field :start_at, :utc_datetime
+    field :reminder_sent_at, :utc_datetime
     belongs_to :resource, Overbooked.Resources.Resource
     belongs_to :user, Overbooked.Accounts.User
 

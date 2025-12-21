@@ -1,7 +1,7 @@
 # Phase 4-5 Feature Development Tracking
 
 **Started:** 2024-12-21
-**Status:** Planning Phase
+**Status:** Phase 4.1 Complete - Email Notifications
 **Branch:** `claude/plan-phase-4-5-features-0ucmN`
 
 ---
@@ -31,8 +31,13 @@ For each feature, we'll engage specialized expertise:
 - [x] Contract terms versioning
 - [x] Admin panel with settings UI
 
-### ❌ Not Yet Implemented (Required for Phase 4+)
-- [ ] **Oban** - Job queue for async/scheduled tasks
+### ✅ Phase 4.1 Complete
+- [x] **Oban** - Job queue for async/scheduled tasks
+- [x] Booking reminder emails (24h before)
+- [x] Contract expiration warnings (7 days before)
+- [x] DB-customizable templates for notifications
+
+### ❌ Not Yet Implemented
 - [ ] Analytics data aggregation queries
 - [ ] Recurring booking patterns
 - [ ] Advanced availability search
@@ -45,39 +50,35 @@ For each feature, we'll engage specialized expertise:
 
 **Goal:** Automated booking reminders and contract expiration warnings
 
-#### Step 1: Oban Setup & Configuration
-- [ ] Add `oban ~> 2.18` to `mix.exs`
-- [ ] Configure Oban in `config/config.exs` with Postgres queue
-- [ ] Create migration for `oban_jobs` table
-- [ ] Add Oban.Telemetry for observability
-- [ ] Configure queues: `default`, `notifications`, `scheduled`
+#### Step 1: Oban Setup & Configuration ✅
+- [x] Add `oban ~> 2.17` to `mix.exs`
+- [x] Configure Oban in `config/config.exs` with Postgres queue
+- [x] Create migration for `oban_jobs` table
+- [x] Configure queues: `default`, `notifications`
+- [x] Add Oban to supervision tree in `application.ex`
 
-#### Step 2: Notification Worker Architecture
-- [ ] Create `Overbooked.Workers.EmailWorker` module
-- [ ] Pattern match on job types:
-  - `:booking_reminder` (24h before)
-  - `:booking_morning_reminder` (morning of)
-  - `:contract_expiration_warning` (7 days before)
-  - `:contract_expired` (on expiration)
-- [ ] Implement idempotency (track `reminder_sent` on bookings)
-- [ ] Add retry logic with exponential backoff
+#### Step 2: Notification Worker Architecture ✅
+- [x] Create `Overbooked.Workers.BookingReminderWorker` module
+- [x] Create `Overbooked.Workers.ContractExpirationWorker` module
+- [x] Implement idempotency (track `reminder_sent_at` on bookings)
+- [x] Oban handles retry logic with exponential backoff
 
-#### Step 3: Email Templates (New Types)
-- [ ] Add `booking_reminder` template type
-- [ ] Add `contract_expiration_warning` template type
-- [ ] Create default template content in `default_templates.ex`
-- [ ] Add to admin email template editor
+#### Step 3: Email Templates (New Types) ✅
+- [x] Add `booking_reminder` template type
+- [x] Add `contract_expiration_warning` template type
+- [x] Create default template content in `default_templates.ex`
+- [x] Templates auto-appear in admin email template editor
 
-#### Step 4: Scheduling Logic
-- [ ] Create `Overbooked.Workers.NotificationSweeper` Oban.Cron job
-- [ ] Run hourly: query bookings starting in 24h where `reminder_sent: false`
-- [ ] Run daily: query contracts expiring in 7 days
-- [ ] Insert jobs atomically with Ecto.Multi
+#### Step 4: Scheduling Logic ✅
+- [x] Create `Overbooked.Workers.NotificationSweeper` Oban.Cron job
+- [x] Runs every 15 minutes via cron
+- [x] Query bookings starting in 24h where `reminder_sent_at` is nil
+- [x] Query contracts expiring in 7 days
 
-#### Step 5: Schema Updates
-- [ ] Add `reminder_sent` boolean to `bookings` table
-- [ ] Add `expiration_warning_sent` boolean to `contracts` table
-- [ ] Create migrations
+#### Step 5: Schema Updates ✅
+- [x] Add `reminder_sent_at` datetime to `bookings` table
+- [x] Add `expiration_warning_sent_at` datetime to `contracts` table
+- [x] Create migrations with appropriate indexes
 
 #### Step 6: Testing & Validation
 - [ ] Write unit tests for workers
@@ -85,16 +86,24 @@ For each feature, we'll engage specialized expertise:
 - [ ] Test idempotency (same job doesn't duplicate)
 - [ ] Verify Mailgun delivery in staging
 
-**Files to Create/Modify:**
+**Files Created/Modified:**
 ```
-lib/overbooked/workers/email_worker.ex (new)
+lib/overbooked/workers/booking_reminder_worker.ex (new)
+lib/overbooked/workers/contract_expiration_worker.ex (new)
 lib/overbooked/workers/notification_sweeper.ex (new)
-lib/overbooked/scheduler/booking.ex (add reminder_sent)
-lib/overbooked/contracts/contract.ex (add warning_sent)
+lib/overbooked/scheduler/booking.ex (add reminder_sent_at)
+lib/overbooked/contracts/contract.ex (add expiration_warning_sent_at)
+lib/overbooked/settings/email_template.ex (add template types)
 lib/overbooked/settings/default_templates.ex (new templates)
+lib/overbooked/email_renderer.ex (sample assigns)
+lib/overbooked/accounts/user_notifier.ex (notification functions)
+lib/overbooked/application.ex (Oban supervision)
 config/config.exs (Oban config)
-priv/repo/migrations/XXXX_add_oban_jobs_table.exs
-priv/repo/migrations/XXXX_add_notification_tracking_fields.exs
+config/test.exs (Oban test mode)
+mix.exs (Oban dependency)
+priv/repo/migrations/20251221230000_add_oban_jobs_table.exs
+priv/repo/migrations/20251221230100_add_reminder_sent_to_bookings.exs
+priv/repo/migrations/20251221230200_add_expiration_warning_to_contracts.exs
 ```
 
 ---
@@ -243,7 +252,14 @@ priv/repo/migrations/XXXX_add_resource_capacity.exs (optional)
 ### 2024-12-21
 - [x] Initial codebase exploration completed
 - [x] Created todos.md tracking document
-- [ ] Begin Phase 4.1: Email Notifications
+- [x] **Phase 4.1 Complete**: Email Notifications with Oban
+  - Added Oban ~> 2.17 for background job processing
+  - Created BookingReminderWorker (24h before booking)
+  - Created ContractExpirationWorker (7 days before expiry)
+  - Created NotificationSweeper cron job (every 15 min)
+  - Added 2 new email template types (booking_reminder, contract_expiration_warning)
+  - Templates auto-appear in admin email editor
+  - Idempotency via `reminder_sent_at` / `expiration_warning_sent_at` timestamps
 
 ---
 

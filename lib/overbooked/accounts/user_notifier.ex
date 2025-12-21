@@ -121,7 +121,7 @@ defmodule Overbooked.Accounts.UserNotifier do
         })
 
       {:contract, contract}, acc ->
-        Map.put(acc, :contract, %{
+        contract_data = %{
           resource: %{
             name: contract.resource.name,
             description: contract.resource.description
@@ -132,6 +132,26 @@ defmodule Overbooked.Accounts.UserNotifier do
           total_amount: format_price(contract.total_amount_cents),
           refund_amount: format_price(contract.refund_amount_cents),
           refund_id: contract.refund_id || ""
+        }
+
+        # Add days_remaining if present (for expiration warnings)
+        contract_data =
+          if Map.has_key?(contract, :days_remaining) do
+            Map.put(contract_data, :days_remaining, to_string(contract.days_remaining))
+          else
+            contract_data
+          end
+
+        Map.put(acc, :contract, contract_data)
+
+      {:booking, booking}, acc ->
+        Map.put(acc, :booking, %{
+          resource: %{
+            name: booking.resource.name
+          },
+          date: format_date(DateTime.to_date(booking.start_at)),
+          start_time: format_time(booking.start_at),
+          end_time: format_time(booking.end_at)
         })
 
       {:url, url}, acc ->
@@ -148,6 +168,10 @@ defmodule Overbooked.Accounts.UserNotifier do
   defp format_date(nil), do: ""
   defp format_date(%Date{} = date), do: Calendar.strftime(date, "%B %d, %Y")
   defp format_date(date), do: to_string(date)
+
+  defp format_time(nil), do: ""
+  defp format_time(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%I:%M %p")
+  defp format_time(_), do: ""
 
   defp format_price(nil), do: "$0.00"
   defp format_price(cents) when is_integer(cents) do
@@ -339,6 +363,33 @@ defmodule Overbooked.Accounts.UserNotifier do
       user.email,
       "refund_notification",
       %{user: user, contract: contract}
+    )
+  end
+
+  @doc """
+  Deliver booking reminder email (24 hours before).
+  Booking should be preloaded with :resource and :user associations.
+  """
+  def deliver_booking_reminder(user, booking) do
+    deliver_from_template(
+      user.email,
+      "booking_reminder",
+      %{user: user, booking: booking}
+    )
+  end
+
+  @doc """
+  Deliver contract expiration warning email.
+  Contract should be preloaded with :resource and :user associations.
+  """
+  def deliver_contract_expiration_warning(user, contract, days_remaining) do
+    # Add days_remaining to the contract map for template rendering
+    contract_with_days = Map.put(contract, :days_remaining, days_remaining)
+
+    deliver_from_template(
+      user.email,
+      "contract_expiration_warning",
+      %{user: user, contract: contract_with_days}
     )
   end
 end

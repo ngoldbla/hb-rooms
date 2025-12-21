@@ -54,7 +54,8 @@ defmodule Overbooked.MixProject do
       {:timex, "~> 3.7"},
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
       {:stripity_stripe, "~> 3.1"},
-      {:hackney, "~> 1.9"}
+      {:hackney, "~> 1.9"},
+      {:oban, "~> 2.17"}
     ]
   end
 
