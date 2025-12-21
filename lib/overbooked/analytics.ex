@@ -9,6 +9,12 @@ defmodule Overbooked.Analytics do
   alias Overbooked.Schedule.Booking
   alias Overbooked.Resources.Resource
 
+  # Helper to safely convert Decimal/nil to float for arithmetic
+  defp to_float(nil), do: 0.0
+  defp to_float(%Decimal{} = d), do: Decimal.to_float(d)
+  defp to_float(n) when is_number(n), do: n / 1.0
+  defp to_float(_), do: 0.0
+
   @doc """
   Gets monthly revenue from active contracts for a specific year and month.
   Returns the total revenue in cents for contracts that were active during that month.
@@ -50,6 +56,9 @@ defmodule Overbooked.Analytics do
       order_by: [desc: sum(c.total_amount_cents)]
     )
     |> Repo.all()
+    |> Enum.map(fn row ->
+      %{row | revenue_cents: to_float(row.revenue_cents)}
+    end)
   end
 
   @doc """
@@ -78,6 +87,9 @@ defmodule Overbooked.Analytics do
       ]
     )
     |> Repo.all()
+    |> Enum.map(fn row ->
+      %{row | revenue_cents: to_float(row.revenue_cents)}
+    end)
   end
 
   @doc """
@@ -164,12 +176,7 @@ defmodule Overbooked.Analytics do
     )
     |> Repo.all()
     |> Enum.map(fn resource ->
-      booked = case resource.booked_minutes do
-        nil -> 0
-        %Decimal{} = minutes -> minutes |> Decimal.to_float()
-        minutes when is_number(minutes) -> minutes
-        _ -> 0
-      end
+      booked = to_float(resource.booked_minutes)
       utilization = if available_minutes > 0, do: booked / available_minutes * 100, else: 0.0
 
       %{
