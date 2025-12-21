@@ -271,6 +271,11 @@ priv/repo/migrations/XXXX_add_resource_capacity.exs (optional)
   - Integrated Chart.js for visualizations (revenue by resource, utilization, trend)
   - Added Analytics navigation to admin panel (mobile, tablet, desktop)
   - URL-shareable analytics with query params
+- [x] **Railway Deployment Fix**: Oban/Ecto Compatibility
+  - Fixed dependency conflict: Oban 2.17.4 requires Ecto 3.10+
+  - Updated `mix.exs`: `{:ecto_sql, "~> 3.6"}` → `{:ecto_sql, "~> 3.10"}`
+  - Resolves build failure during `mix deps.compile` on Railway
+  - Ecto 3.10 is backward compatible with all existing code
 
 ---
 
