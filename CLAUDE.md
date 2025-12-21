@@ -240,7 +240,44 @@ If migration fails partway:
 - `mobile_nav_option/1` - Individual option component
 - `get_nav_label/1` - Helper to get display label for tab
 
-**File fixed:** `lib/overbooked_web/live/live_helpers.ex` (lines 119-243)
+**Current approach (2024-12-21):**
+- Inline `style="width: 100%"` on container div (more reliable than Tailwind classes on iOS)
+- Inline `style="width: 100%; min-width: 100%"` on button element
+- `left-0 right-0` positioning on dropdown panel instead of `w-full`
+
+**If width still inconsistent, try these alternatives:**
+
+1. **Add `-webkit-appearance: none`** to button to disable iOS default styling:
+   ```html
+   style="width: 100%; min-width: 100%; -webkit-appearance: none;"
+   ```
+
+2. **Wrap in block-level container** with explicit display:
+   ```html
+   <div style="display: block; width: 100%;">
+     <div class="relative" style="width: 100%;">
+       ...
+     </div>
+   </div>
+   ```
+
+3. **Use calc() for width** to force recalculation:
+   ```html
+   style="width: calc(100% - 0px); min-width: 100%;"
+   ```
+
+4. **Check parent container** - ensure `header` component's inner_block wrapper has proper width:
+   - File: `lib/overbooked_web/live/live_helpers.ex` line ~1029
+   - The `<div class="w-full sm:flex-1 mt-2 sm:mt-0">` may need inline style
+
+5. **Use viewport units as fallback**:
+   ```html
+   style="width: 100%; min-width: calc(100vw - 2rem);"
+   ```
+
+6. **JavaScript resize observer** - as last resort, add a hook to force width on mount
+
+**File fixed:** `lib/overbooked_web/live/live_helpers.ex` (lines 119-147)
 
 ---
 
