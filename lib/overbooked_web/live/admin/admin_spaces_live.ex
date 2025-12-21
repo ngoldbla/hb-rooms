@@ -67,11 +67,11 @@ defmodule OverbookedWeb.AdminSpacesLive do
         </div>
 
         <div>
-          <label for="resource_type" class="block text-sm font-medium text-gray-700">
+          <label for="resource_type_name" class="block text-sm font-medium text-gray-700">
             Resource Type
           </label>
           <div class="mt-1">
-            <.select form={f} field={:resource_type} options={@resource_types} />
+            <.select form={f} field={:resource_type_name} options={@resource_types} />
           </div>
         </div>
 
@@ -290,7 +290,7 @@ defmodule OverbookedWeb.AdminSpacesLive do
 
   @impl true
   def handle_event("create", %{"resource" => resource_params}, socket) do
-    resource_type_name = Map.get(resource_params, "resource_type", "room")
+    resource_type_name = Map.get(resource_params, "resource_type_name", "room")
     resource_params = convert_rate_to_cents(resource_params)
     resource_params = handle_checkbox(resource_params, "is_rentable")
 
