@@ -138,6 +138,7 @@ defmodule OverbookedWeb.Router do
       live "/admin/spaces", AdminSpacesLive, :index
       live "/admin/contracts", AdminContractsLive, :index
       live "/admin/settings", AdminSettingsLive, :index
+      live "/admin/email-templates", AdminEmailTemplatesLive, :index
     end
   end
 end

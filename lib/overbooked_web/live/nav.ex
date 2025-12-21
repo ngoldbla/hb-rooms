@@ -56,6 +56,9 @@ defmodule OverbookedWeb.Nav do
         {OverbookedWeb.AdminSettingsLive, _} ->
           :admin_settings
 
+        {OverbookedWeb.AdminEmailTemplatesLive, _} ->
+          :admin_email_templates
+
         {OverbookedWeb.UserSettingsLive, _} ->
           :settings
 

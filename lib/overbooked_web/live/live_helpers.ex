@@ -131,7 +131,13 @@ defmodule OverbookedWeb.LiveHelpers do
         active={@active_tab == :admin_settings}
         navigate={Routes.admin_settings_path(@socket, :index)}
       >
-        Email
+        Settings
+      </:link>
+      <:link
+        active={@active_tab == :admin_email_templates}
+        navigate={Routes.admin_email_templates_path(@socket, :index)}
+      >
+        Templates
       </:link>
     </.tabs>
     """
