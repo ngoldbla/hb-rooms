@@ -54,8 +54,16 @@ defmodule OverbookedWeb.StripeWebhookController do
         :ok
 
       {:error, :resource_busy} ->
-        Logger.error("Failed to activate contract: resource is busy")
-        # TODO: Handle refund scenario
+        Logger.error("Failed to activate contract: resource is busy, initiating refund")
+        # Initiate automatic refund when resource is not available
+        case initiate_automatic_refund(session) do
+          {:ok, _refund} ->
+            Logger.info("Automatic refund initiated for session #{session.id}")
+
+          {:error, reason} ->
+            Logger.error("Failed to initiate automatic refund: #{inspect(reason)}")
+        end
+
         :error
 
       {:error, reason} ->
@@ -89,6 +97,36 @@ defmodule OverbookedWeb.StripeWebhookController do
     :ok
   end
 
+  # Handle charge.refunded - record refund on contract
+  defp handle_event("charge.refunded", event) do
+    charge = event.data.object
+    payment_intent_id = charge.payment_intent
+
+    Logger.info("Processing charge.refunded for payment intent #{payment_intent_id}")
+
+    # Get the most recent refund from the charge
+    case charge.refunds do
+      %{data: [refund | _]} ->
+        case Contracts.record_refund_by_payment_intent(payment_intent_id, refund) do
+          {:ok, contract} ->
+            Logger.info("Refund recorded for contract #{contract.id}")
+            :ok
+
+          {:error, :contract_not_found} ->
+            Logger.warn("No contract found for payment intent #{payment_intent_id}")
+            :ok
+
+          {:error, reason} ->
+            Logger.error("Failed to record refund: #{inspect(reason)}")
+            :error
+        end
+
+      _ ->
+        Logger.warn("No refund data in charge.refunded event")
+        :ok
+    end
+  end
+
   # Ignore other events
   defp handle_event(type, _event) do
     Logger.debug("Ignoring Stripe event: #{type}")
@@ -99,6 +137,17 @@ defmodule OverbookedWeb.StripeWebhookController do
     case get_req_header(conn, "stripe-signature") do
       [signature | _] -> signature
       [] -> ""
+    end
+  end
+
+  # Initiate automatic refund when resource is not available
+  defp initiate_automatic_refund(session) do
+    case session.payment_intent do
+      nil ->
+        {:error, :no_payment_intent}
+
+      payment_intent_id ->
+        Overbooked.Stripe.create_refund(payment_intent_id, nil, :requested_by_customer)
     end
   end
 end

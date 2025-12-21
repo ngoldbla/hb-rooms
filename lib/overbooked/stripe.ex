@@ -109,6 +109,71 @@ defmodule Overbooked.Stripe do
     Settings.get_stripe_config().source
   end
 
+  @doc """
+  Creates a Stripe Billing Portal session for a customer to manage their billing.
+
+  ## Parameters
+    - customer_id: The Stripe customer ID
+    - return_url: URL to redirect to when they're done
+
+  ## Returns
+    - `{:ok, session}` with the portal session URL
+    - `{:error, reason}` on failure
+  """
+  def create_portal_session(customer_id, return_url) do
+    config = Settings.get_stripe_config()
+
+    unless config.secret_key do
+      {:error, "Stripe is not configured. Please configure Stripe in Admin → Settings."}
+    else
+      params = %{
+        customer: customer_id,
+        return_url: return_url
+      }
+
+      Stripe.BillingPortal.Session.create(params, api_key: config.secret_key)
+    end
+  end
+
+  @doc """
+  Creates a refund for a payment intent.
+
+  ## Parameters
+    - payment_intent_id: The Stripe payment intent ID
+    - amount_cents: Optional amount to refund (nil for full refund)
+    - reason: Optional reason (:duplicate, :fraudulent, :requested_by_customer)
+
+  ## Returns
+    - `{:ok, refund}` on success
+    - `{:error, reason}` on failure
+  """
+  def create_refund(payment_intent_id, amount_cents \\ nil, reason \\ :requested_by_customer) do
+    config = Settings.get_stripe_config()
+
+    unless config.secret_key do
+      {:error, "Stripe is not configured. Please configure Stripe in Admin → Settings."}
+    else
+      params = %{payment_intent: payment_intent_id, reason: reason}
+
+      params =
+        if amount_cents do
+          Map.put(params, :amount, amount_cents)
+        else
+          params
+        end
+
+      Stripe.Refund.create(params, api_key: config.secret_key)
+    end
+  end
+
+  @doc """
+  Retrieves a payment intent by ID.
+  """
+  def get_payment_intent(payment_intent_id) do
+    config = Settings.get_stripe_config()
+    Stripe.PaymentIntent.retrieve(payment_intent_id, %{}, api_key: config.secret_key)
+  end
+
   defp format_date(%Date{} = date) do
     Calendar.strftime(date, "%B %d, %Y")
   end

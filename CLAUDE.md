@@ -21,6 +21,8 @@
 | Admin Contracts | ✅ Complete | `lib/overbooked_web/live/admin/admin_contracts_live.ex` |
 | Nav Integration | ✅ Fixed | `lib/overbooked_web/live/nav.ex`, `templates/layout/live.html.heex` |
 | Contract Emails | ✅ Complete | `templates/email/contract_confirmation.html.heex`, `contract_cancelled.html.heex` |
+| Stripe Customer Portal | ✅ Complete | `lib/overbooked/stripe.ex`, `billing_controller.ex`, `contracts_live.ex` |
+| Refund Handling | ✅ Complete | `stripe.ex`, `contracts.ex`, `stripe_webhook_controller.ex`, `admin_contracts_live.ex` |
 
 ## Brand Assets
 
@@ -265,7 +267,7 @@ end
       <code class="text-sm text-gray-600 break-all"><%= @webhook_url %></code>
       <p class="mt-2 text-xs text-gray-500">
         Add this URL in Stripe Dashboard → Developers → Webhooks.<br/>
-        Subscribe to: <code>checkout.session.completed</code>, <code>payment_intent.succeeded</code>
+        Subscribe to: <code>checkout.session.completed</code>, <code>payment_intent.succeeded</code>, <code>charge.refunded</code>
       </p>
     </div>
   </div>
@@ -347,7 +349,7 @@ Transactional emails for contract lifecycle events.
 
 ---
 
-## 2.5 Stripe Customer Portal (Priority: LOW)
+## 2.5 Stripe Customer Portal ✅ COMPLETED
 
 Allow users to manage billing through Stripe.
 
@@ -359,9 +361,15 @@ Allow users to manage billing through Stripe.
 | 2.5.2 | Add billing route | `router.ex` | `/billing` redirects to Stripe |
 | 2.5.3 | Add portal link to contracts page | `contracts_live.ex` | "Manage Billing" button |
 
+### Implementation Details
+- `create_portal_session/2` in `lib/overbooked/stripe.ex` creates Stripe Billing Portal sessions
+- `BillingController` in `lib/overbooked_web/controllers/billing_controller.ex` handles the redirect
+- Route added at `GET /billing` requiring authentication
+- "Manage Billing" button shown on `/contracts` page when user has stripe_customer_id
+
 ---
 
-## 2.6 Refund Handling (Priority: LOW)
+## 2.6 Refund Handling ✅ COMPLETED
 
 Handle refunds for cancelled contracts.
 
@@ -370,9 +378,22 @@ Handle refunds for cancelled contracts.
 | # | Task | File(s) | Validation |
 |---|------|---------|------------|
 | 2.6.1 | Add create_refund function | `stripe.ex` | Initiates Stripe refund |
-| 2.6.2 | Add refund fields to contract | Migration + schema | refund_amount_cents, refunded_at |
+| 2.6.2 | Add refund fields to contract | Migration + schema | refund_amount_cents, refund_id, refunded_at |
 | 2.6.3 | Handle charge.refunded webhook | `stripe_webhook_controller.ex` | Update contract |
 | 2.6.4 | Add refund button for admin | `admin_contracts_live.ex` | Admin initiates refund |
+| 2.6.5 | Create refund email templates | `templates/email/` | Refund notification emails |
+
+### Implementation Details
+- Migration `20251221100000_add_refund_fields_to_contracts.exs` adds refund fields
+- `Contract` schema updated with `refund_amount_cents`, `refund_id`, `refunded_at` fields
+- `create_refund/3` and `get_payment_intent/1` added to `stripe.ex`
+- `initiate_refund/2`, `record_refund/2`, `record_refund_by_payment_intent/2` added to `contracts.ex`
+- `charge.refunded` webhook handler records refunds from Stripe
+- Automatic refund initiated when `resource_busy` on checkout completion
+- "Refund" button in admin contracts page with confirmation modal
+- Contract details modal shows refund information
+- Email templates: `refund_notification.html.heex`, `refund_notification.text.heex`
+- `deliver_refund_notification/2` in `user_notifier.ex`
 
 ---
 
@@ -386,9 +407,9 @@ Handle refunds for cancelled contracts.
 ## Phase 2B: User Experience ✅ COMPLETED
 4. ✅ **2.4 Contract Email Templates** - Confirmation + cancellation emails
 
-## Phase 2C: Operations (Future)
-5. 📋 **2.5 Stripe Customer Portal** - Self-service billing
-6. 📋 **2.6 Refund Handling** - Handle cancellation refunds
+## Phase 2C: Operations ✅ COMPLETED
+5. ✅ **2.5 Stripe Customer Portal** - Self-service billing via `/billing`
+6. ✅ **2.6 Refund Handling** - Full refund workflow with admin UI and email notifications
 
 ---
 

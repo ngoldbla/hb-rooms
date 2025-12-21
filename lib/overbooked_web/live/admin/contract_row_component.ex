@@ -79,6 +79,30 @@ defmodule OverbookedWeb.ContractRowComponent do
             </div>
           <% end %>
 
+          <%= if @contract.refund_id do %>
+            <div class="border-t pt-4 mt-4">
+              <h4 class="text-sm font-medium text-orange-700 mb-2">Refund Information</h4>
+              <div class="space-y-2 text-xs bg-orange-50 p-3 rounded">
+                <div>
+                  <span class="text-gray-500">Refund ID:</span>
+                  <code class="ml-2 bg-orange-100 px-1 py-0.5 rounded text-xs break-all">
+                    <%= @contract.refund_id %>
+                  </code>
+                </div>
+                <div>
+                  <span class="text-gray-500">Amount Refunded:</span>
+                  <span class="ml-2 font-medium text-orange-700">
+                    <%= Contracts.format_price(@contract.refund_amount_cents) %>
+                  </span>
+                </div>
+                <div>
+                  <span class="text-gray-500">Refunded At:</span>
+                  <span class="ml-2"><%= format_datetime(@contract.refunded_at) %></span>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
           <div class="border-t pt-4 mt-4 text-xs text-gray-500">
             <p>Created: <%= format_datetime(@contract.inserted_at) %></p>
             <p>Updated: <%= format_datetime(@contract.updated_at) %></p>
@@ -114,6 +138,36 @@ defmodule OverbookedWeb.ContractRowComponent do
 
         <:cancel>Keep Contract</:cancel>
       </.modal>
+
+      <%= if @contract.stripe_payment_intent_id and is_nil(@contract.refund_id) do %>
+        <.modal
+          id={"refund-contract-modal-#{@contract.id}"}
+          on_confirm={
+            JS.push("refund_contract", value: %{id: @contract.id})
+            |> hide_modal("refund-contract-modal-#{@contract.id}")
+          }
+          icon={nil}
+        >
+          <:title>Refund Contract</:title>
+          <span>
+            Are you sure you want to issue a full refund for this contract?
+            <br /><br />
+            <strong>User:</strong> <%= @contract.user.name %><br />
+            <strong>Space:</strong> <%= if @contract.resource, do: @contract.resource.name, else: "N/A" %><br />
+            <strong>Amount to Refund:</strong> <%= Contracts.format_price(@contract.total_amount_cents) %>
+            <br /><br />
+            <span class="text-orange-600 text-sm">
+              This will initiate a refund through Stripe. The funds will be returned to the customer's
+              original payment method within 5-10 business days.
+            </span>
+          </span>
+          <:confirm phx-disable-with="Processing Refund..." variant={:warning}>
+            Issue Refund
+          </:confirm>
+
+          <:cancel>Cancel</:cancel>
+        </.modal>
+      <% end %>
 
       <%= for {col, _i} <- Enum.with_index(@col) do %>
         <td class={"px-6 py-3 text-sm font-medium text-gray-900 #{col[:class]}"}>

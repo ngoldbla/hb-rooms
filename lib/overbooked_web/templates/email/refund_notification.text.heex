@@ -1,0 +1,28 @@
+Refund Processed
+
+Hi <%= @user.name %>,
+
+We've processed a refund for your office space contract.
+
+REFUND DETAILS
+==============
+
+Space: <%= @contract.resource.name %>
+
+Original Contract Period: <%= OverbookedWeb.EmailView.format_contract_date(@contract.start_date) %> to <%= OverbookedWeb.EmailView.format_contract_date(@contract.end_date) %>
+
+Refund Amount: <%= OverbookedWeb.EmailView.format_price(@contract.refund_amount_cents) %>
+
+Refund ID: <%= @contract.refund_id %>
+
+==============
+
+The refund has been initiated and should appear in your original payment method within 5-10 business days, depending on your bank or card issuer.
+
+If you have any questions about this refund or would like to rent another space, please don't hesitate to reach out.
+
+Browse available spaces: <%= @base_url %>/spaces
+
+---
+Hatchbridge Rooms
+<%= @base_url %>

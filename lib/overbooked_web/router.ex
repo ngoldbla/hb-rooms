@@ -85,6 +85,9 @@ defmodule OverbookedWeb.Router do
 
     delete "/logout", UserSessionController, :delete
     get "/confirm/email/:token", UserConfirmationController, :confirm_email
+
+    # Stripe billing portal redirect
+    get "/billing", BillingController, :portal
   end
 
   ## Live paths

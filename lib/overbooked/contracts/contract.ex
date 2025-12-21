@@ -18,6 +18,11 @@ defmodule Overbooked.Contracts.Contract do
     field :stripe_payment_intent_id, :string
     field :stripe_customer_id, :string
 
+    # Refund fields
+    field :refund_amount_cents, :integer
+    field :refund_id, :string
+    field :refunded_at, :utc_datetime
+
     belongs_to :resource, Overbooked.Resources.Resource
     belongs_to :user, Overbooked.Accounts.User
 
@@ -25,7 +30,7 @@ defmodule Overbooked.Contracts.Contract do
   end
 
   @required_fields [:start_date, :end_date, :duration_months, :monthly_rate_cents, :total_amount_cents, :resource_id, :user_id]
-  @optional_fields [:status, :stripe_checkout_session_id, :stripe_payment_intent_id, :stripe_customer_id]
+  @optional_fields [:status, :stripe_checkout_session_id, :stripe_payment_intent_id, :stripe_customer_id, :refund_amount_cents, :refund_id, :refunded_at]
 
   @doc false
   def changeset(contract, attrs) do
@@ -57,6 +62,16 @@ defmodule Overbooked.Contracts.Contract do
     contract
     |> change()
     |> put_change(:status, :cancelled)
+  end
+
+  @doc """
+  Changeset for recording a refund on a contract.
+  """
+  def refund_changeset(contract, attrs) do
+    contract
+    |> cast(attrs, [:refund_amount_cents, :refund_id, :refunded_at])
+    |> validate_required([:refund_amount_cents, :refund_id, :refunded_at])
+    |> validate_number(:refund_amount_cents, greater_than: 0)
   end
 
   defp validate_dates(changeset) do

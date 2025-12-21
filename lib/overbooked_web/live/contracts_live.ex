@@ -8,9 +8,11 @@ defmodule OverbookedWeb.ContractsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    contracts = Contracts.list_user_contracts(socket.assigns.current_user)
+    user = socket.assigns.current_user
+    contracts = Contracts.list_user_contracts(user)
+    has_billing = Contracts.get_stripe_customer_id_for_user(user) != nil
 
-    {:ok, assign(socket, contracts: contracts)}
+    {:ok, assign(socket, contracts: contracts, has_billing: has_billing)}
   end
 
   @impl true
@@ -24,11 +26,21 @@ defmodule OverbookedWeb.ContractsLive do
           <p class="text-gray-600">
             View and manage your office space contracts.
           </p>
-          <.link navigate={"/spaces"}>
-            <.button variant={:primary}>
-              Browse Spaces
-            </.button>
-          </.link>
+          <div class="flex items-center space-x-2">
+            <%= if @has_billing do %>
+              <.link href={"/billing"} method="get">
+                <.button variant={:secondary}>
+                  <.icon name={:credit_card} class="h-4 w-4 mr-1" />
+                  Manage Billing
+                </.button>
+              </.link>
+            <% end %>
+            <.link navigate={"/spaces"}>
+              <.button variant={:primary}>
+                Browse Spaces
+              </.button>
+            </.link>
+          </div>
         </div>
 
         <%= if Enum.empty?(@contracts) do %>
