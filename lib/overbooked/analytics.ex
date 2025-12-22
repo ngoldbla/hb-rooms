@@ -190,7 +190,7 @@ defmodule Overbooked.Analytics do
         utilization_percentage: Float.round(utilization, 2)
       }
     end)
-    |> Enum.sort_by(& &1.utilization_percentage, :desc)
+    |> Enum.sort_by(&(&1.utilization_percentage), :desc)
   end
 
   @doc """
