@@ -139,7 +139,7 @@ defmodule OverbookedWeb.LiveHelpers do
           path={Routes.admin_spaces_path(@socket, :index)}
           active={@active_tab in [:admin_spaces, :admin_contracts]}
           label="Rentals"
-          icon={:office_building}
+          icon={:building_office}
         />
         <.nav_chip
           path={Routes.admin_analytics_path(@socket, :index)}
@@ -151,7 +151,7 @@ defmodule OverbookedWeb.LiveHelpers do
           path={Routes.admin_settings_path(@socket, :index)}
           active={@active_tab in [:admin_settings, :admin_email_templates]}
           label="Settings"
-          icon={:cog}
+          icon={:cog_6_tooth}
         />
       </div>
     </div>
