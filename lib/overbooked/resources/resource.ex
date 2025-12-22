@@ -11,6 +11,7 @@ defmodule Overbooked.Resources.Resource do
     field :is_rentable, :boolean, default: false
     field :monthly_rate_cents, :integer
     field :description, :string
+    field :capacity, :integer, default: 1
 
     has_many :bookings, Overbooked.Schedule.Booking
     has_many :contracts, Overbooked.Contracts.Contract
@@ -26,8 +27,9 @@ defmodule Overbooked.Resources.Resource do
   @doc false
   def changeset(resource, attrs) do
     resource
-    |> cast(attrs, [:name, :color, :is_rentable, :monthly_rate_cents, :description])
+    |> cast(attrs, [:name, :color, :is_rentable, :monthly_rate_cents, :description, :capacity])
     |> validate_required([:name, :color])
+    |> validate_number(:capacity, greater_than: 0)
     |> validate_rentable_pricing()
   end
 

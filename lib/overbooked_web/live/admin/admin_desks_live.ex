@@ -78,6 +78,15 @@ defmodule OverbookedWeb.AdminDesksLive do
           </div>
         </div>
         <div class="">
+          <label for="capacity" class="block text-sm font-medium text-gray-700">
+            Capacity (people)
+          </label>
+          <div class="mt-1">
+            <.text_input form={f} field={:capacity} type="number" min="1" phx_debounce="blur" />
+            <.error form={f} field={:capacity} />
+          </div>
+        </div>
+        <div class="">
           <label for="amenities" class="block text-sm font-medium text-gray-700">
             Amenities
           </label>
