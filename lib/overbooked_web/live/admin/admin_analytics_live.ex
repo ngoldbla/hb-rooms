@@ -403,12 +403,12 @@ defmodule OverbookedWeb.AdminAnalyticsLive do
     # Prepare chart data
     chart_data = %{
       revenue: %{
-        labels: Enum.map(summary.revenue_by_resource, & &1.resource_name),
+        labels: Enum.map(summary.revenue_by_resource, &(&1.resource_name)),
         data: Enum.map(summary.revenue_by_resource, &(&1.revenue_cents / 100))
       },
       utilization: %{
-        labels: Enum.map(summary.utilization_by_resource, & &1.resource_name),
-        data: Enum.map(summary.utilization_by_resource, & &1.utilization_percentage)
+        labels: Enum.map(summary.utilization_by_resource, &(&1.resource_name)),
+        data: Enum.map(summary.utilization_by_resource, &(&1.utilization_percentage))
       },
       trend: %{
         labels: Enum.map(revenue_trend, &format_month/1),
