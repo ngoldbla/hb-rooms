@@ -17,52 +17,11 @@ defmodule OverbookedWeb do
   and import those modules here.
   """
 
-  def controller do
-    quote do
-      use Phoenix.Controller, namespace: OverbookedWeb
-
-      import Plug.Conn
-      import OverbookedWeb.Gettext
-      alias OverbookedWeb.Router.Helpers, as: Routes
-    end
-  end
-
-  def view do
-    quote do
-      use Phoenix.View,
-        root: "lib/overbooked_web/templates",
-        namespace: OverbookedWeb
-
-      # Import convenience functions from controllers
-      import Phoenix.Controller,
-        only: [get_flash: 1, get_flash: 2, view_module: 1, view_template: 1]
-
-      # Include shared imports and aliases for views
-      unquote(view_helpers())
-    end
-  end
-
-  def live_view do
-    quote do
-      use Phoenix.LiveView,
-        layout: {OverbookedWeb.LayoutView, "live.html"},
-        container: {:div, class: "relative h-screen flex overflow-hidden bg-white"}
-
-      unquote(view_helpers())
-    end
-  end
-
-  def live_component do
-    quote do
-      use Phoenix.LiveComponent
-
-      unquote(view_helpers())
-    end
-  end
+  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
 
   def router do
     quote do
-      use Phoenix.Router
+      use Phoenix.Router, helpers: true
 
       import Plug.Conn
       import Phoenix.Controller
@@ -77,24 +36,101 @@ defmodule OverbookedWeb do
     end
   end
 
-  defp view_helpers do
+  def controller do
     quote do
-      # Use all HTML functionality (forms, tags, etc)
-      use Phoenix.HTML
+      use Phoenix.Controller,
+        formats: [:html, :json],
+        layouts: [html: OverbookedWeb.Layouts]
 
-      # Import LiveView and .heex helpers (live_render, live_patch, <.form>, etc)
+      import Plug.Conn
+      import OverbookedWeb.Gettext
+
+      unquote(verified_routes())
+    end
+  end
+
+  def live_view do
+    quote do
+      use Phoenix.LiveView,
+        layout: {OverbookedWeb.Layouts, :live},
+        container: {:div, class: "relative h-screen flex overflow-hidden bg-white"}
+
+      unquote(html_helpers())
+    end
+  end
+
+  def live_component do
+    quote do
+      use Phoenix.LiveComponent
+
+      unquote(html_helpers())
+    end
+  end
+
+  def html do
+    quote do
+      use Phoenix.Component
+
+      # Import convenience functions from controllers
+      import Phoenix.Controller,
+        only: [get_csrf_token: 0, view_module: 1, view_template: 1]
+
+      # Include general helpers for rendering HTML
+      unquote(html_helpers())
+    end
+  end
+
+  # Keep view/0 for backwards compatibility with existing templates
+  def view do
+    quote do
+      use Phoenix.View,
+        root: "lib/overbooked_web/templates",
+        namespace: OverbookedWeb
+
+      # Import convenience functions from controllers
+      import Phoenix.Controller,
+        only: [get_flash: 1, get_flash: 2, view_module: 1, view_template: 1]
+
+      # Include shared imports and aliases for views
+      unquote(html_helpers())
+    end
+  end
+
+  defp html_helpers do
+    quote do
+      # HTML escaping functionality
+      import Phoenix.HTML
+      import Phoenix.HTML.Form
+
+      # Core UI components
       import Phoenix.Component
 
-      # Import basic rendering functionality (render, render_layout, etc)
-      import Phoenix.View
+      # Shortcut for generating JS commands
+      alias Phoenix.LiveView.JS
 
+      # Backwards compatibility - import Phoenix.View for render helpers
+      import Phoenix.View, only: [render: 2, render: 3]
+
+      # Project-specific helpers
       import OverbookedWeb.LiveHelpers
       import OverbookedWeb.LiveFormHelpers
       import OverbookedWeb.ErrorHelpers
       import OverbookedWeb.Gettext
-      alias OverbookedWeb.Router.Helpers, as: Routes
-      alias Phoenix.LiveView.JS
 
+      # Routes and verified routes
+      unquote(verified_routes())
+    end
+  end
+
+  def verified_routes do
+    quote do
+      use Phoenix.VerifiedRoutes,
+        endpoint: OverbookedWeb.Endpoint,
+        router: OverbookedWeb.Router,
+        statics: OverbookedWeb.static_paths()
+
+      # Keep legacy Routes alias for backwards compatibility during migration
+      alias OverbookedWeb.Router.Helpers, as: Routes
     end
   end
 

@@ -3,9 +3,9 @@ defmodule OverbookedWeb.ErrorHelpers do
   Conveniences for translating and building error messages.
   """
 
-  use Phoenix.HTML
-  import Phoenix.LiveView
-  import Phoenix.LiveView.Helpers
+  import Phoenix.HTML
+  import Phoenix.HTML.Form
+  use PhoenixHTMLHelpers
 
   @doc """
   Generates tag for inlined form input errors.

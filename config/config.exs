@@ -13,7 +13,10 @@ config :overbooked,
 # Configures the endpoint
 config :overbooked, OverbookedWeb.Endpoint,
   url: [host: "localhost"],
-  render_errors: [view: OverbookedWeb.ErrorView, accepts: ~w(html json), layout: false],
+  render_errors: [
+    formats: [html: OverbookedWeb.ErrorHTML, json: OverbookedWeb.ErrorJSON],
+    layout: false
+  ],
   pubsub_server: Overbooked.PubSub,
   live_view: [signing_salt: "Fd8SWPu3"]
 
