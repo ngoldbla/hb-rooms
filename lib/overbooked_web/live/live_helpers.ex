@@ -339,13 +339,15 @@ defmodule OverbookedWeb.LiveHelpers do
   def icon(assigns) do
     assigns = assign_new(assigns, :"aria-hidden", fn -> !Map.has_key?(assigns, :"aria-label") end)
 
-    ~H"""
-    <%= if @outlined do %>
-      <%= apply(Heroicons, @name, [Map.merge(%{outline: true}, @rest)]) %>
-    <% else %>
-      <%= apply(Heroicons, @name, [Map.merge(%{solid: true}, @rest)]) %>
-    <% end %>
-    """
+    # heroicons 0.5+ requires Phoenix.Component assigns with __changed__ tracking
+    # for its internal assign/3 calls to work properly
+    icon_assigns =
+      assigns.rest
+      |> Map.put(:solid, not assigns.outlined)
+      |> Map.put(:outline, assigns.outlined)
+      |> Map.put(:__changed__, nil)
+
+    apply(Heroicons, assigns.name, [icon_assigns])
   end
 
   @doc """
