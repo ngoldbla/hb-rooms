@@ -26,6 +26,9 @@ defmodule OverbookedWeb.Nav do
         {OverbookedWeb.DesksLive, _} ->
           :desks
 
+        {OverbookedWeb.SearchLive, _} ->
+          :search
+
         {OverbookedWeb.SpacesLive, _} ->
           :spaces
 
