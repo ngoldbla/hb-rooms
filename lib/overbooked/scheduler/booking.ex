@@ -8,6 +8,7 @@ defmodule Overbooked.Schedule.Booking do
     field :reminder_sent_at, :utc_datetime
     belongs_to :resource, Overbooked.Resources.Resource
     belongs_to :user, Overbooked.Accounts.User
+    belongs_to :recurring_rule, Overbooked.Schedule.RecurringRule
 
     timestamps()
   end

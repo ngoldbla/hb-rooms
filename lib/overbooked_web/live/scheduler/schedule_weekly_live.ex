@@ -255,6 +255,33 @@ defmodule OverbookedWeb.ScheduleWeeklyLive do
      )}
   end
 
+  def handle_info({:created_recurring_booking, _rule, count}, socket) do
+    {:noreply,
+     socket
+     |> push_patch(
+       to:
+         Routes.schedule_weekly_path(socket, :index, %{
+           to_date: socket.assigns.to_date,
+           from_date: socket.assigns.from_date,
+           resource_id: socket.assigns.resource_id
+         })
+     )
+     |> put_flash(
+       :info,
+       "Recurring booking created: #{count} bookings scheduled."
+     )}
+  end
+
+  def handle_info({:recurring_conflict, conflicting}, socket) do
+    date = Calendar.strftime(conflicting.start_at, "%b %d at %H:%M")
+    {:noreply,
+     socket
+     |> put_flash(
+       :error,
+       "Conflict detected on #{date}. Please adjust the recurring pattern."
+     )}
+  end
+
   def handle_info({:resource_busy, resource}, socket) do
     {:noreply,
      socket

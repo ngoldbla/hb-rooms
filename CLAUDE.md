@@ -75,17 +75,34 @@ Phase 3.5: Admin Navigation UX Refactor (Complete)
 - URL-shareable analytics with query params
 - Files: `analytics.ex`, `admin_analytics_live.ex`, `assets/js/hooks/charts.js`
 
+### Phase 5: Recurring Bookings + Availability Search (IN PROGRESS)
+
+**5.1 Recurring Bookings (Backend Complete)**
+- RecurringRule schema with pattern validation (daily/weekly/biweekly/monthly)
+- RecurringExpander service for date calculation using Timex
+- Ecto.Multi atomic creation with conflict detection
+- Series management functions (delete single occurrence, delete series)
+- Files: `scheduler/recurring_rule.ex`, `scheduler/recurring_expander.ex`, `scheduler.ex`
+
+**5.2 Availability Search (Backend Complete)**
+- AvailabilitySearch module with NOT EXISTS queries
+- SearchLive at `/search` with filters (date, time, type, capacity, amenities)
+- Performance indexes on bookings table
+- Capacity field added to resources
+- Files: `resources/availability_search.ex`, `search_live.ex`
+
+**Remaining UI Work:**
+- Recurring booking UI in calendar forms
+- Visual indicator for recurring bookings
+- Capacity field in admin forms
+
 ### Future Phases (Prioritized)
 
-**Phase 5 - Medium Priority:**
-1. Recurring Bookings (weekly/daily patterns)
-2. Availability Search (by date, amenities, capacity)
-
 **Phase 6 - Lower Priority:**
-3. Google Calendar Sync
-4. Resource Images
-5. Discount Codes
-6. CSV Import/Export
+1. Google Calendar Sync
+2. Resource Images
+3. Discount Codes
+4. CSV Import/Export
 
 ---
 

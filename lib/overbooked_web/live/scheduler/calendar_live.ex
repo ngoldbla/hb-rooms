@@ -154,8 +154,13 @@ defmodule OverbookedWeb.ScheduleLive.Calendar do
                 class={"bg-#{booking.resource.color}-400 #{if first_slot?(@bookings_hourly, @hours_of_day, index), do: "rounded-t-[5px]"} #{if last_slot?(@bookings_hourly, @hours_of_day, index), do: "rounded-b-[5px]"} h-full w-full relative hover:opacity-80 cursor-pointer"}
               >
                 <%= if first_slot?(@bookings_hourly, @hours_of_day, index) do %>
-                  <div class="text-white text-xs text-left absolute top-0 left-0 p-1 w-full break-all z-10 ">
-                    <%= booking.user.name %>
+                  <div class="text-white text-xs text-left absolute top-0 left-0 p-1 w-full break-all z-10 flex items-center gap-1">
+                    <%= if booking.recurring_rule_id do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    <% end %>
+                    <span class="truncate"><%= booking.user.name %></span>
                   </div>
                 <% end %>
               </button>
