@@ -15,7 +15,8 @@ defmodule OverbookedWeb.UserForgotPasswordLive do
       <div class="max-w-md mt-6">
         <.form
           :let={f}
-          for={:user}
+          for={%{}}
+          as={:user}
           phx-submit={:reset}
           id="forgot-password-form"
           class="flex flex-col space-y-4"

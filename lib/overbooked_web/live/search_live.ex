@@ -177,7 +177,7 @@ defmodule OverbookedWeb.SearchLive do
           <div class="bg-white rounded-lg shadow p-6 sticky top-4">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
             
-            <.form for={:search} phx-submit="search" phx-change="search" id="search-form">
+            <.form for={%{}} as={:search} phx-submit="search" phx-change="search" id="search-form">
               <div class="space-y-6">
                 <!-- Date -->
                 <div>
@@ -273,7 +273,7 @@ defmodule OverbookedWeb.SearchLive do
         <div class="lg:col-span-3">
           <%= if length(@results) == 0 do %>
             <div class="bg-white rounded-lg shadow p-8 text-center">
-              <.icon name={:search} class="mx-auto h-12 w-12 text-gray-400" />
+              <.icon name={:magnifying_glass} class="mx-auto h-12 w-12 text-gray-400" />
               <h3 class="mt-2 text-sm font-semibold text-gray-900">No results</h3>
               <p class="mt-1 text-sm text-gray-500">
                 No spaces are available for the selected time. Try adjusting your filters.

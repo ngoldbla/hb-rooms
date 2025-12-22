@@ -38,7 +38,7 @@ defmodule OverbookedWeb.SpacesLive do
 
         <%= if Enum.empty?(@spaces) do %>
           <div class="text-center py-12 text-gray-500">
-            <.icon name={:office_building} class="mx-auto h-12 w-12 text-gray-400" />
+            <.icon name={:building_office} class="mx-auto h-12 w-12 text-gray-400" />
             <h3 class="mt-2 text-sm font-medium text-gray-900">No spaces available</h3>
             <p class="mt-1 text-sm text-gray-500">
               Check back later for available office spaces.
@@ -190,7 +190,7 @@ defmodule OverbookedWeb.SpacesLive do
                     <span class="text-xs text-gray-500">Version <%= @contract_terms.version %></span>
                   </div>
                   <button type="button" phx-click="close_terms_preview" class="text-gray-400 hover:text-gray-500">
-                    <.icon name={:x} class="h-5 w-5" />
+                    <.icon name={:x_mark} class="h-5 w-5" />
                   </button>
                 </div>
                 <div class="p-6 max-h-[60vh] overflow-y-auto">

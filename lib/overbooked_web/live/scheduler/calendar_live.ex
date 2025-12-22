@@ -30,7 +30,7 @@ defmodule OverbookedWeb.ScheduleLive.Calendar do
               <%= weekly_title(@beginning_of_week, @end_of_week) %>
             </div>
             <div class="flex flex-row space-x-2">
-              <.form :let={f} for={:filters} phx-change={:filters}>
+              <.form :let={f} for={%{}} as={:filters} phx-change={:filters}>
                 <.select
                   form={f}
                   field={:resource_id}

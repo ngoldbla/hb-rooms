@@ -16,7 +16,8 @@ defmodule OverbookedWeb.LoginLive do
         <.form
           :let={f}
           action={Routes.user_session_path(@socket, :create)}
-          for={:user}
+          for={%{}}
+          as={:user}
           id="login-form"
           class="flex flex-col space-y-4"
         >

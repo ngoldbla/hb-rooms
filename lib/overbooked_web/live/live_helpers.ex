@@ -62,7 +62,7 @@ defmodule OverbookedWeb.LiveHelpers do
             type="button"
             class="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
           >
-            <.icon name={:x} class="w-4 h-4" />
+            <.icon name={:x_mark} class="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -89,7 +89,7 @@ defmodule OverbookedWeb.LiveHelpers do
             type="button"
             class="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
           >
-            <.icon name={:x} class="w-4 h-4" />
+            <.icon name={:x_mark} class="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -232,7 +232,7 @@ defmodule OverbookedWeb.LiveHelpers do
         active={@active_tab in [:admin_spaces, :admin_contracts]}
         path={Routes.admin_spaces_path(@socket, :index)}
       >
-        <.icon name={:office_building} class="w-4 h-4 mr-2" /> Rentals
+        <.icon name={:building_office} class="w-4 h-4 mr-2" /> Rentals
       </.nav_link>
       <.nav_link active={@active_tab == :admin_analytics} path={Routes.admin_analytics_path(@socket, :index)}>
         <.icon name={:chart_bar} class="w-4 h-4 mr-2" /> Analytics
@@ -241,7 +241,7 @@ defmodule OverbookedWeb.LiveHelpers do
         active={@active_tab in [:admin_settings, :admin_email_templates]}
         path={Routes.admin_settings_path(@socket, :index)}
       >
-        <.icon name={:cog} class="w-4 h-4 mr-2" /> Settings
+        <.icon name={:cog_6_tooth} class="w-4 h-4 mr-2" /> Settings
       </.nav_link>
     </nav>
     """
@@ -264,7 +264,7 @@ defmodule OverbookedWeb.LiveHelpers do
         active={@active_tab in [:admin_spaces, :admin_contracts]}
         path={Routes.admin_spaces_path(@socket, :index)}
       >
-        <.icon name={:office_building} class="w-4 h-4 mr-1.5" /> Rentals
+        <.icon name={:building_office} class="w-4 h-4 mr-1.5" /> Rentals
       </.desktop_tab>
       <.desktop_tab active={@active_tab == :admin_analytics} path={Routes.admin_analytics_path(@socket, :index)}>
         <.icon name={:chart_bar} class="w-4 h-4 mr-1.5" /> Analytics
@@ -273,7 +273,7 @@ defmodule OverbookedWeb.LiveHelpers do
         active={@active_tab in [:admin_settings, :admin_email_templates]}
         path={Routes.admin_settings_path(@socket, :index)}
       >
-        <.icon name={:cog} class="w-4 h-4 mr-1.5" /> Settings
+        <.icon name={:cog_6_tooth} class="w-4 h-4 mr-1.5" /> Settings
       </.desktop_tab>
     </div>
     """
