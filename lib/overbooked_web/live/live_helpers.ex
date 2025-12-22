@@ -341,9 +341,9 @@ defmodule OverbookedWeb.LiveHelpers do
 
     ~H"""
     <%= if @outlined do %>
-      <%= apply(Heroicons, @name, [[outline: true] ++ Map.to_list(@rest)]) %>
+      <%= apply(Heroicons, @name, [Map.merge(%{outline: true}, @rest)]) %>
     <% else %>
-      <%= apply(Heroicons, @name, [[solid: true] ++ Map.to_list(@rest)]) %>
+      <%= apply(Heroicons, @name, [Map.merge(%{solid: true}, @rest)]) %>
     <% end %>
     """
   end
