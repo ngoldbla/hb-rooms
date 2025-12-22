@@ -177,7 +177,7 @@ defmodule OverbookedWeb.SearchLive do
           <div class="bg-white rounded-lg shadow p-6 sticky top-4">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
             
-            <.form for={%{}} phx-submit="search" phx-change="search" id="search-form">
+            <.form for={:search} phx-submit="search" phx-change="search" id="search-form">
               <div class="space-y-6">
                 <!-- Date -->
                 <div>
