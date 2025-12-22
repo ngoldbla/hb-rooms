@@ -1,5 +1,6 @@
 defmodule OverbookedWeb.LiveFormHelpers do
   use Phoenix.Component
+  use PhoenixHTMLHelpers
 
   import Phoenix.HTML.Form
 
