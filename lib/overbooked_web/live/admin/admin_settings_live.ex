@@ -432,7 +432,7 @@ defmodule OverbookedWeb.AdminSettingsLive do
                 <div class="px-6 py-4 bg-gray-50 flex justify-between items-center">
                   <h3 class="text-lg font-medium text-gray-900">Contract Terms Preview</h3>
                   <button type="button" phx-click="close_terms_preview" class="text-gray-400 hover:text-gray-500">
-                    <.icon name={:x} class="h-5 w-5" />
+                    <.icon name={:x_mark} class="h-5 w-5" />
                   </button>
                 </div>
                 <div class="p-6 max-h-[70vh] overflow-y-auto">

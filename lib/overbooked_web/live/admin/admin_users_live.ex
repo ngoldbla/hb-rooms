@@ -44,7 +44,8 @@ defmodule OverbookedWeb.AdminUsersLive do
               <:title>Invite a user</:title>
               <.form
                 :let={f}
-                for={:invitation}
+                for={%{}}
+                as={:invitation}
                 phx-submit={:invite}
                 id="user-invitation-form"
                 class="flex flex-col space-y-4"
@@ -84,7 +85,7 @@ defmodule OverbookedWeb.AdminUsersLive do
               </span>
             </:col>
             <:col :let={user} label="Admin" width="w-24">
-              <.form :let={f} for={:admin} phx-change="change-admin">
+              <.form :let={f} for={%{}} as={:admin} phx-change="change-admin">
                 <.number_input form={f} field={:user_id} value={user.id} class="hidden" />
                 <.switch form={f} field={:admin} checked={user.admin} />
               </.form>
