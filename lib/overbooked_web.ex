@@ -108,9 +108,6 @@ defmodule OverbookedWeb do
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
 
-      # Backwards compatibility - import Phoenix.View for render helpers
-      import Phoenix.View, only: [render: 2, render: 3]
-
       # Project-specific helpers
       import OverbookedWeb.LiveHelpers
       import OverbookedWeb.LiveFormHelpers
